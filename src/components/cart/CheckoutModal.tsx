@@ -13,7 +13,6 @@ type Props = {
 export default function CheckoutModal({ onClose, onSuccess }: Props) {
   const { items, total, clearCart } = useCartStore();
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -24,7 +23,7 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
 
     const payload: OrderPayload = {
       customerName: name,
-      phone,
+      phone: "",
       items,
       total: total(),
     };
@@ -65,12 +64,12 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
         </button>
 
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
-            <MessageCircle size={24} className="text-green-600" />
+          <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center">
+            <MessageCircle size={24} className="text-amber-600" />
           </div>
           <div>
             <h3 className="font-bold text-lg">Confirmar pedido</h3>
-            <p className="text-gray-500 text-sm">Te contactaremos por WhatsApp</p>
+            <p className="text-gray-500 text-sm">Se abrirá WhatsApp con tu pedido listo</p>
           </div>
         </div>
 
@@ -85,7 +84,7 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
           ))}
           <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between font-bold">
             <span>Total</span>
-            <span className="text-green-600">${total().toLocaleString("es-AR")}</span>
+            <span className="text-amber-600">${total().toLocaleString("es-AR")}</span>
           </div>
         </div>
 
@@ -98,18 +97,7 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Juan García"
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-            <input
-              type="tel"
-              required
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+54 9 11 1234-5678"
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
           </div>
 
@@ -118,7 +106,7 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
           >
             {loading ? (
               <Loader2 size={18} className="animate-spin" />
