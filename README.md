@@ -1,49 +1,51 @@
-# 📦 Tobias Distribuciones
+# Tobias Distribuciones — Tienda Online
 
-![Banner](./assets/banner.png)
+E-commerce catalog with WhatsApp checkout integration, built with Next.js 16, Tailwind CSS, Prisma 7 (SQLite), and Zustand.
 
-## 🚀 Overview
-**Tobias Distribuciones** es una plataforma moderna diseñada para la gestión logística y distribución eficiente. Este proyecto busca digitalizar y optimizar la cadena de suministro, ofreciendo una interfaz intuitiva y herramientas de alta gama para el control de inventario y despacho.
+## Features
 
-## ✨ Características Principales
-- 🛠️ **Gestión de Inventario**: Control total sobre stock y almacenes.
-- 🚚 **Seguimiento Logístico**: Monitoreo en tiempo real de envíos y entregas.
-- 📊 **Reportes Dinámicos**: Visualización de datos clave para la toma de decisiones.
-- 📱 **Diseño Responsive**: Acceso desde cualquier dispositivo con una experiencia premium.
-- 🔒 **Seguridad Avanzada**: Autenticación y protección de datos críticos.
+- **Catalog** — Product grid with category filters and search
+- **Cart** — Slide-in cart drawer with quantity controls
+- **WhatsApp checkout** — Order confirmation sent directly to WhatsApp
+- **Admin panel** — Full CRUD for products and categories, order history
 
-## 🛠️ Tech Stack
-- **Frontend**: HTML5, Vanilla CSS3, JavaScript (ES6+)
-- **Build Tool**: Vite (Recomendado)
-- **Design Pattern**: Glassmorphism & Modern UI/UX
+## Quick Start
 
-## ⚙️ Instalación y Configuración
+```bash
+# 1. Install dependencies
+npm install
 
-1. **Clonar el repositorio:**
-   ```bash
-   git clone https://github.com/AndresImach/Tobias-distribuciones.git
-   ```
+# 2. Configure environment
+cp .env.example .env
+# Edit .env: set DATABASE_URL to an absolute path
 
-2. **Acceder al directorio:**
-   ```bash
-   cd Tobias-distribuciones
-   ```
+# 3. Run migrations
+npm run db:migrate
 
-3. **Instalar dependencias:**
-   ```bash
-   npm install
-   ```
+# 4. Seed sample data
+npm run db:seed
 
-4. **Ejecutar en desarrollo:**
-   ```bash
-   npm run dev
-   ```
+# 5. Start development server
+npm run dev
+```
 
-## 🎨 Diseño y Estética
-Este proyecto prioriza una experiencia de usuario (UX) excepcional con una interfaz (UI) moderna, utilizando:
-- **Colores**: Paletas armoniosas de azul profundo y plata.
-- **Tipografía**: Fuentes modernas para máxima legibilidad.
-- **Efectos**: Micro-animaciones y transiciones fluidas.
+Open [http://localhost:3000](http://localhost:3000) for the store, and [http://localhost:3000/admin](http://localhost:3000/admin) for the admin panel.
 
----
-Desarrollado con ❤️ por [Andrés Imach](https://github.com/AndresImach)
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router) |
+| Styling | Tailwind CSS 4 |
+| Database | SQLite via Prisma 7 + LibSQL |
+| State | Zustand (cart) |
+| Icons | Lucide React |
+
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | Absolute SQLite file path: `file:/path/to/prisma/dev.db` |
+| `NEXTAUTH_SECRET` | Random secret string |
+| `NEXTAUTH_URL` | App URL (e.g. `http://localhost:3000`) |
+| `WHATSAPP_NUMBER` | WhatsApp number without `+` (e.g. `5491112345678`) |
