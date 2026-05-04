@@ -21,8 +21,8 @@ export default async function HomePage() {
             <Image
               src="/logo.png"
               alt="Tobias Distribuciones"
-              width={130}
-              height={44}
+              width={100}
+              height={34}
               className="object-contain"
               priority
             />
