@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import type { CartItem } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminOrdersPage() {
   const orders = await prisma.order.findMany({ orderBy: { createdAt: "desc" } });
 
