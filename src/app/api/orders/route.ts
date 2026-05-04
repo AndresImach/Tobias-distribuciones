@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   const body: OrderPayload = await request.json();
   const { customerName, phone, items, total } = body;
 
-  if (!customerName || !phone || !items?.length) {
+  if (!customerName || !items?.length) {
     return NextResponse.json({ error: "Datos incompletos" }, { status: 400 });
   }
 
