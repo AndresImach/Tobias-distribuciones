@@ -51,6 +51,23 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
     setShowForm(true);
   };
 
+  const compressImage = (file: File, maxPx = 1200, quality = 0.82): Promise<Blob> =>
+    new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("canvas error"));
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("compression failed"))), "image/jpeg", quality);
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -58,8 +75,15 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
     setImagePreview(URL.createObjectURL(file));
     setUploading(true);
 
+    let blob: Blob = file;
+    try {
+      blob = await compressImage(file);
+    } catch {
+      // fall back to original if compression fails
+    }
+
     const data = new FormData();
-    data.append("file", file);
+    data.append("file", new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" }));
 
     const res = await fetch("/api/admin/upload", { method: "POST", body: data });
     const json = await res.json();
