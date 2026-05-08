@@ -43,3 +43,7 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# uploaded product images
+/public/uploads/products/*
+!/public/uploads/products/.gitkeep

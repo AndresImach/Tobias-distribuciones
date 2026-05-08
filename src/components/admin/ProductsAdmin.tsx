@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Pencil, Trash2, Star, Eye, EyeOff } from "lucide-react";
+import { useState, useRef } from "react";
+import { Plus, Pencil, Trash2, Star, EyeOff, ImagePlus, X } from "lucide-react";
 import type { Product, Category } from "@/lib/types";
 
 type Props = {
@@ -25,9 +25,13 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const openNew = () => {
     setForm(emptyForm);
+    setImagePreview("");
     setEditingId(null);
     setShowForm(true);
   };
@@ -42,8 +46,37 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
       featured: p.featured,
       categoryId: String(p.categoryId),
     });
+    setImagePreview(p.image);
     setEditingId(p.id);
     setShowForm(true);
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImagePreview(URL.createObjectURL(file));
+    setUploading(true);
+
+    const data = new FormData();
+    data.append("file", file);
+
+    const res = await fetch("/api/admin/upload", { method: "POST", body: data });
+    const json = await res.json();
+    setUploading(false);
+
+    if (res.ok) {
+      setForm((f) => ({ ...f, image: json.url }));
+    } else {
+      setImagePreview(form.image);
+      alert(json.error || "Error al subir la imagen");
+    }
+  };
+
+  const clearImage = () => {
+    setImagePreview("");
+    setForm((f) => ({ ...f, image: "" }));
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,7 +126,7 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
       {showForm && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="font-bold text-lg mb-4">{editingId ? "Editar producto" : "Nuevo producto"}</h3>
+            <h3 className="font-bold text-lg mb-4 text-gray-800">{editingId ? "Editar producto" : "Nuevo producto"}</h3>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
@@ -102,7 +135,7 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                     required
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400"
                   />
                 </div>
                 <div>
@@ -114,7 +147,7 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                     step="0.01"
                     value={form.price}
                     onChange={(e) => setForm({ ...form, price: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400"
                   />
                 </div>
                 <div>
@@ -123,7 +156,7 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                     required
                     value={form.categoryId}
                     onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-white"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400 bg-white"
                   >
                     <option value="">Seleccionar...</option>
                     {categories.map((c) => (
@@ -137,18 +170,60 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                     rows={2}
                     value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400 resize-none"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400 resize-none"
                   />
                 </div>
+
+                {/* Image upload */}
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">URL de imagen</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Imagen del producto</label>
                   <input
-                    value={form.image}
-                    onChange={(e) => setForm({ ...form, image: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
                   />
+
+                  {imagePreview ? (
+                    <div className="relative w-full h-40 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={imagePreview} alt="Preview" className="w-full h-full object-contain" />
+                      {uploading && (
+                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-sm text-gray-500">
+                          Subiendo...
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={clearImage}
+                        className="absolute top-2 right-2 bg-white rounded-full p-1 shadow hover:bg-red-50 text-gray-500 hover:text-red-500"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full h-28 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-green-400 hover:text-green-500 transition-colors"
+                    >
+                      <ImagePlus size={24} />
+                      <span className="text-sm">Elegir foto de la galería</span>
+                    </button>
+                  )}
+
+                  {imagePreview && !uploading && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="mt-1.5 text-xs text-gray-400 hover:text-green-600 underline"
+                    >
+                      Cambiar imagen
+                    </button>
+                  )}
                 </div>
+
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -179,7 +254,7 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || uploading}
                   className="flex-1 py-2 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-medium disabled:opacity-60"
                 >
                   {loading ? "Guardando..." : "Guardar"}

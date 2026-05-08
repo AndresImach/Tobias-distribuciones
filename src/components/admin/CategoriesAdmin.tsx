@@ -83,7 +83,7 @@ export default function CategoriesAdmin({ initialCategories }: { initialCategori
                   required
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value, slug: slugify(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400"
                 />
               </div>
               <div>
@@ -92,7 +92,7 @@ export default function CategoriesAdmin({ initialCategories }: { initialCategori
                   required
                   value={form.slug}
                   onChange={(e) => setForm({ ...form, slug: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400 font-mono"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400 font-mono"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -102,7 +102,7 @@ export default function CategoriesAdmin({ initialCategories }: { initialCategori
                     value={form.emoji}
                     onChange={(e) => setForm({ ...form, emoji: e.target.value })}
                     placeholder="🛒"
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400"
                   />
                 </div>
                 <div>
@@ -111,7 +111,7 @@ export default function CategoriesAdmin({ initialCategories }: { initialCategori
                     type="number"
                     value={form.order}
                     onChange={(e) => setForm({ ...form, order: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400"
                   />
                 </div>
               </div>
