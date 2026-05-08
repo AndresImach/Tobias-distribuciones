@@ -27,11 +27,13 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string>("");
   const [uploading, setUploading] = useState(false);
+  const [uploadedByFile, setUploadedByFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const openNew = () => {
     setForm(emptyForm);
     setImagePreview("");
+    setUploadedByFile(false);
     setEditingId(null);
     setShowForm(true);
   };
@@ -40,13 +42,14 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
     setForm({
       name: p.name,
       description: p.description,
-      price: String(p.price),
+      price: p.price ? String(p.price) : "",
       image: p.image,
       available: p.available,
       featured: p.featured,
       categoryId: String(p.categoryId),
     });
     setImagePreview(p.image);
+    setUploadedByFile(false);
     setEditingId(p.id);
     setShowForm(true);
   };
@@ -81,8 +84,7 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const preview = URL.createObjectURL(file);
-    setImagePreview(preview);
+    setImagePreview(URL.createObjectURL(file));
     setUploading(true);
 
     try {
@@ -101,6 +103,7 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
 
       if (res.ok) {
         setForm((f) => ({ ...f, image: json.url }));
+        setUploadedByFile(true);
       } else {
         setImagePreview(form.image);
         alert(json.error || "Error al subir la imagen");
@@ -115,6 +118,7 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
 
   const clearImage = () => {
     setImagePreview("");
+    setUploadedByFile(false);
     setForm((f) => ({ ...f, image: "" }));
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -214,7 +218,6 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                   />
                 </div>
 
-                {/* Image upload */}
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Imagen del producto</label>
                   <input
@@ -267,11 +270,11 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                     <span className="text-xs text-gray-400 shrink-0">o pegar URL</span>
                     <input
                       type="url"
-                      value={uploading ? "" : form.image.startsWith("/uploads/") ? "" : form.image}
+                      value={uploadedByFile ? "" : form.image}
                       onChange={(e) => {
-                        const url = e.target.value;
-                        setForm((f) => ({ ...f, image: url }));
-                        setImagePreview(url);
+                        setUploadedByFile(false);
+                        setForm((f) => ({ ...f, image: e.target.value }));
+                        setImagePreview(e.target.value);
                       }}
                       placeholder="https://..."
                       className="flex-1 px-3 py-1.5 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400"
