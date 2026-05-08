@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
+import { put } from "@vercel/blob";
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,9 +20,12 @@ export async function POST(request: NextRequest) {
     let url: string;
 
     if (process.env.BLOB_READ_WRITE_TOKEN) {
-      // Production (Vercel): store in Vercel Blob
-      const { put } = await import("@vercel/blob");
-      const blob = await put(`products/${filename}`, file, { access: "public" });
+      const bytes = await file.arrayBuffer();
+      const blob = await put(`products/${filename}`, Buffer.from(bytes), {
+        access: "public",
+        contentType: file.type,
+        token: process.env.BLOB_READ_WRITE_TOKEN,
+      });
       url = blob.url;
     } else {
       // Local dev: write to public/uploads/products/
@@ -36,7 +40,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url });
   } catch (err) {
-    console.error("Upload error:", err);
-    return NextResponse.json({ error: "Error al guardar la imagen" }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Upload error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
