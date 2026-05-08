@@ -43,7 +43,7 @@ export default function ProductCard({ product }: { product: Product }) {
         )}
         <div className="flex items-center justify-between mt-2">
           <span className="text-lg font-bold text-amber-700">
-            ${product.price.toLocaleString("es-AR")}
+            {product.price ? `$${product.price.toLocaleString("es-AR")}` : "Consultar"}
           </span>
 
           {quantity === 0 ? (

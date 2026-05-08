@@ -179,12 +179,12 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Precio *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
                   <input
-                    required
                     type="number"
                     min="0"
                     step="0.01"
+                    placeholder="Sin precio"
                     value={form.price}
                     onChange={(e) => setForm({ ...form, price: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400"
@@ -341,7 +341,7 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                     {p.featured && <Star size={12} className="text-yellow-400 fill-yellow-400 flex-shrink-0" />}
                     {!p.available && <EyeOff size={12} className="text-gray-300 flex-shrink-0" />}
                   </div>
-                  <p className="text-xs text-gray-400">{p.category?.name} · ${p.price.toLocaleString("es-AR")}</p>
+                  <p className="text-xs text-gray-400">{p.category?.name} · {p.price ? `$${p.price.toLocaleString("es-AR")}` : "Consultar"}</p>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <button onClick={() => openEdit(p)} className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg">
