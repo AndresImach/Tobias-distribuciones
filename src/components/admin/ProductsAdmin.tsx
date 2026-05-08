@@ -53,6 +53,11 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
 
   const compressImage = (file: File, maxPx = 1200, quality = 0.82): Promise<Blob> =>
     new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("timeout")), 8000);
+      const done = (result: Blob | Error) => {
+        clearTimeout(timer);
+        result instanceof Error ? reject(result) : resolve(result);
+      };
       const img = new window.Image();
       img.onload = () => {
         const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
@@ -60,11 +65,15 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
         canvas.width = Math.round(img.width * scale);
         canvas.height = Math.round(img.height * scale);
         const ctx = canvas.getContext("2d");
-        if (!ctx) return reject(new Error("canvas error"));
+        if (!ctx) return done(new Error("canvas error"));
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("compression failed"))), "image/jpeg", quality);
+        canvas.toBlob(
+          (blob) => done(blob ?? new Error("compression failed")),
+          "image/jpeg",
+          quality,
+        );
       };
-      img.onerror = reject;
+      img.onerror = () => done(new Error("load error"));
       img.src = URL.createObjectURL(file);
     });
 
@@ -72,28 +81,35 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setImagePreview(URL.createObjectURL(file));
+    const preview = URL.createObjectURL(file);
+    setImagePreview(preview);
     setUploading(true);
 
-    let blob: Blob = file;
     try {
-      blob = await compressImage(file);
+      let blob: Blob = file;
+      try {
+        blob = await compressImage(file);
+      } catch {
+        // fall back to original if compression fails or times out
+      }
+
+      const data = new FormData();
+      data.append("file", new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" }));
+
+      const res = await fetch("/api/admin/upload", { method: "POST", body: data });
+      const json = await res.json();
+
+      if (res.ok) {
+        setForm((f) => ({ ...f, image: json.url }));
+      } else {
+        setImagePreview(form.image);
+        alert(json.error || "Error al subir la imagen");
+      }
     } catch {
-      // fall back to original if compression fails
-    }
-
-    const data = new FormData();
-    data.append("file", new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" }));
-
-    const res = await fetch("/api/admin/upload", { method: "POST", body: data });
-    const json = await res.json();
-    setUploading(false);
-
-    if (res.ok) {
-      setForm((f) => ({ ...f, image: json.url }));
-    } else {
       setImagePreview(form.image);
-      alert(json.error || "Error al subir la imagen");
+      alert("No se pudo subir la imagen. Intentá de nuevo.");
+    } finally {
+      setUploading(false);
     }
   };
 
