@@ -128,8 +128,8 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="font-bold text-lg mb-4 text-gray-800">{editingId ? "Editar producto" : "Nuevo producto"}</h3>
             <form onSubmit={handleSubmit} className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
                   <input
                     required
@@ -164,7 +164,7 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                     ))}
                   </select>
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
                   <textarea
                     rows={2}
@@ -175,7 +175,7 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                 </div>
 
                 {/* Image upload */}
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Imagen del producto</label>
                   <input
                     ref={fileInputRef}
