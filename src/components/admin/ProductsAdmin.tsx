@@ -246,6 +246,21 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                       Cambiar imagen
                     </button>
                   )}
+
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-xs text-gray-400 shrink-0">o pegar URL</span>
+                    <input
+                      type="url"
+                      value={uploading ? "" : form.image.startsWith("/uploads/") ? "" : form.image}
+                      onChange={(e) => {
+                        const url = e.target.value;
+                        setForm((f) => ({ ...f, image: url }));
+                        setImagePreview(url);
+                      }}
+                      placeholder="https://..."
+                      className="flex-1 px-3 py-1.5 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400"
+                    />
+                  </div>
                 </div>
 
                 <label className="flex items-center gap-2 cursor-pointer">
