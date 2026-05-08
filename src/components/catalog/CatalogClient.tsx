@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import ProductCard from "./ProductCard";
+import ProductModal from "./ProductModal";
 import CategoryFilter from "./CategoryFilter";
 import SearchBar from "./SearchBar";
 import type { Product } from "@/lib/types";
@@ -23,6 +24,7 @@ export default function CatalogClient({ initialCategories }: Props) {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [search, setSearch] = useState("");
+  const [modalProduct, setModalProduct] = useState<Product | null>(null);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -70,11 +72,19 @@ export default function CatalogClient({ initialCategories }: Props) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 items-start">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              onOpenModal={() => setModalProduct(product)}
+            />
           ))}
         </div>
+      )}
+
+      {modalProduct && (
+        <ProductModal product={modalProduct} onClose={() => setModalProduct(null)} />
       )}
     </div>
   );

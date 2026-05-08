@@ -5,14 +5,22 @@ import { ShoppingCart, Star, Plus, Minus } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import type { Product } from "@/lib/types";
 
-export default function ProductCard({ product }: { product: Product }) {
+type Props = {
+  product: Product;
+  onOpenModal: () => void;
+};
+
+export default function ProductCard({ product, onOpenModal }: Props) {
   const { addItem, updateQuantity, items } = useCartStore();
   const cartItem = items.find((i) => i.product.id === product.id);
   const quantity = cartItem?.quantity ?? 0;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group">
-      <div className="relative aspect-square bg-amber-50 overflow-hidden">
+    <div
+      className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group cursor-pointer flex flex-col h-full"
+      onClick={onOpenModal}
+    >
+      <div className="relative aspect-square bg-amber-50 overflow-hidden shrink-0">
         {product.image ? (
           <Image
             src={product.image}
@@ -33,29 +41,32 @@ export default function ProductCard({ product }: { product: Product }) {
         )}
       </div>
 
-      <div className="p-3">
+      <div className="p-3 flex flex-col flex-1">
         <p className="text-xs text-amber-500 mb-1 font-medium">{product.category?.name}</p>
         <h3 className="font-semibold text-gray-800 text-sm leading-tight mb-1 line-clamp-2">
           {product.name}
         </h3>
         {product.description && (
-          <p className="text-xs text-gray-500 mb-2 line-clamp-2">{product.description}</p>
+          <p className="text-xs text-gray-500 line-clamp-2">{product.description}</p>
         )}
-        <div className="flex items-center justify-between mt-2">
+        <div className="flex items-center justify-between mt-auto pt-2">
           <span className="text-lg font-bold text-amber-700">
-            ${product.price.toLocaleString("es-AR")}
+            {product.price ? `$${product.price.toLocaleString("es-AR")}` : "Consultar"}
           </span>
 
           {quantity === 0 ? (
             <button
-              onClick={() => addItem(product)}
+              onClick={(e) => { e.stopPropagation(); addItem(product); }}
               className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl p-2 transition-all"
               aria-label={`Agregar ${product.name} al carrito`}
             >
               <ShoppingCart size={16} />
             </button>
           ) : (
-            <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-xl px-1">
+            <div
+              className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-xl px-1"
+              onClick={(e) => e.stopPropagation()}
+            >
               <button
                 onClick={() => updateQuantity(product.id, quantity - 1)}
                 className="w-7 h-7 flex items-center justify-center text-amber-600 hover:bg-amber-100 rounded-lg transition-colors"

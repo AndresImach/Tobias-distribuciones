@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Pencil, Trash2, Star, Eye, EyeOff } from "lucide-react";
+import { useState, useRef } from "react";
+import { Plus, Pencil, Trash2, Star, EyeOff, ImagePlus, X } from "lucide-react";
 import type { Product, Category } from "@/lib/types";
 
 type Props = {
@@ -25,9 +25,15 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadedByFile, setUploadedByFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const openNew = () => {
     setForm(emptyForm);
+    setImagePreview("");
+    setUploadedByFile(false);
     setEditingId(null);
     setShowForm(true);
   };
@@ -36,14 +42,85 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
     setForm({
       name: p.name,
       description: p.description,
-      price: String(p.price),
+      price: p.price ? String(p.price) : "",
       image: p.image,
       available: p.available,
       featured: p.featured,
       categoryId: String(p.categoryId),
     });
+    setImagePreview(p.image);
+    setUploadedByFile(false);
     setEditingId(p.id);
     setShowForm(true);
+  };
+
+  const compressImage = (file: File, maxPx = 1200, quality = 0.82): Promise<Blob> =>
+    new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("timeout")), 8000);
+      const done = (result: Blob | Error) => {
+        clearTimeout(timer);
+        result instanceof Error ? reject(result) : resolve(result);
+      };
+      const img = new window.Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return done(new Error("canvas error"));
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(
+          (blob) => done(blob ?? new Error("compression failed")),
+          "image/jpeg",
+          quality,
+        );
+      };
+      img.onerror = () => done(new Error("load error"));
+      img.src = URL.createObjectURL(file);
+    });
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImagePreview(URL.createObjectURL(file));
+    setUploading(true);
+
+    try {
+      let blob: Blob = file;
+      try {
+        blob = await compressImage(file);
+      } catch {
+        // fall back to original if compression fails or times out
+      }
+
+      const data = new FormData();
+      data.append("file", new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" }));
+
+      const res = await fetch("/api/admin/upload", { method: "POST", body: data });
+      const json = await res.json();
+
+      if (res.ok) {
+        setForm((f) => ({ ...f, image: json.url }));
+        setUploadedByFile(true);
+      } else {
+        setImagePreview(form.image);
+        alert(json.error || "Error al subir la imagen");
+      }
+    } catch {
+      setImagePreview(form.image);
+      alert("No se pudo subir la imagen. Intentá de nuevo.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const clearImage = () => {
+    setImagePreview("");
+    setUploadedByFile(false);
+    setForm((f) => ({ ...f, image: "" }));
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,28 +170,28 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
       {showForm && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="font-bold text-lg mb-4">{editingId ? "Editar producto" : "Nuevo producto"}</h3>
+            <h3 className="font-bold text-lg mb-4 text-gray-800">{editingId ? "Editar producto" : "Nuevo producto"}</h3>
             <form onSubmit={handleSubmit} className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
                   <input
                     required
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Precio *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
                   <input
-                    required
                     type="number"
                     min="0"
                     step="0.01"
+                    placeholder="Sin precio"
                     value={form.price}
                     onChange={(e) => setForm({ ...form, price: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400"
                   />
                 </div>
                 <div>
@@ -123,7 +200,7 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                     required
                     value={form.categoryId}
                     onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-white"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400 bg-white"
                   >
                     <option value="">Seleccionar...</option>
                     {categories.map((c) => (
@@ -131,24 +208,80 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                     ))}
                   </select>
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
                   <textarea
                     rows={2}
                     value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400 resize-none"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400 resize-none"
                   />
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">URL de imagen</label>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Imagen del producto</label>
                   <input
-                    value={form.image}
-                    onChange={(e) => setForm({ ...form, image: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
                   />
+
+                  {imagePreview ? (
+                    <div className="relative w-full h-40 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={imagePreview} alt="Preview" className="w-full h-full object-contain" />
+                      {uploading && (
+                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-sm text-gray-500">
+                          Subiendo...
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={clearImage}
+                        className="absolute top-2 right-2 bg-white rounded-full p-1 shadow hover:bg-red-50 text-gray-500 hover:text-red-500"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full h-28 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-green-400 hover:text-green-500 transition-colors"
+                    >
+                      <ImagePlus size={24} />
+                      <span className="text-sm">Elegir foto de la galería</span>
+                    </button>
+                  )}
+
+                  {imagePreview && !uploading && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="mt-1.5 text-xs text-gray-400 hover:text-green-600 underline"
+                    >
+                      Cambiar imagen
+                    </button>
+                  )}
+
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-xs text-gray-400 shrink-0">o pegar URL</span>
+                    <input
+                      type="url"
+                      value={uploadedByFile ? "" : form.image}
+                      onChange={(e) => {
+                        setUploadedByFile(false);
+                        setForm((f) => ({ ...f, image: e.target.value }));
+                        setImagePreview(e.target.value);
+                      }}
+                      placeholder="https://..."
+                      className="flex-1 px-3 py-1.5 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400"
+                    />
+                  </div>
                 </div>
+
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -179,7 +312,7 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || uploading}
                   className="flex-1 py-2 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-medium disabled:opacity-60"
                 >
                   {loading ? "Guardando..." : "Guardar"}
@@ -211,7 +344,7 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                     {p.featured && <Star size={12} className="text-yellow-400 fill-yellow-400 flex-shrink-0" />}
                     {!p.available && <EyeOff size={12} className="text-gray-300 flex-shrink-0" />}
                   </div>
-                  <p className="text-xs text-gray-400">{p.category?.name} · ${p.price.toLocaleString("es-AR")}</p>
+                  <p className="text-xs text-gray-400">{p.category?.name} · {p.price ? `$${p.price.toLocaleString("es-AR")}` : "Consultar"}</p>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <button onClick={() => openEdit(p)} className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg">
