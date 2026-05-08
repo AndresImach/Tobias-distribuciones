@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
 import { randomUUID } from "crypto";
 
 export async function POST(request: NextRequest) {
@@ -16,17 +14,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Solo se permiten imágenes" }, { status: 400 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const uploadsDir = join(process.cwd(), "public", "uploads", "products");
-    await mkdir(uploadsDir, { recursive: true });
-
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const filename = `${randomUUID()}.${ext}`;
-    await writeFile(join(uploadsDir, filename), buffer);
+    let url: string;
 
-    return NextResponse.json({ url: `/uploads/products/${filename}` });
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      // Production (Vercel): store in Vercel Blob
+      const { put } = await import("@vercel/blob");
+      const blob = await put(`products/${filename}`, file, { access: "public" });
+      url = blob.url;
+    } else {
+      // Local dev: write to public/uploads/products/
+      const { writeFile, mkdir } = await import("fs/promises");
+      const { join } = await import("path");
+      const uploadsDir = join(process.cwd(), "public", "uploads", "products");
+      await mkdir(uploadsDir, { recursive: true });
+      const bytes = await file.arrayBuffer();
+      await writeFile(join(uploadsDir, filename), Buffer.from(bytes));
+      url = `/uploads/products/${filename}`;
+    }
+
+    return NextResponse.json({ url });
   } catch (err) {
     console.error("Upload error:", err);
     return NextResponse.json({ error: "Error al guardar la imagen" }, { status: 500 });
