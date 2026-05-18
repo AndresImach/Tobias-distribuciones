@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import type { Category } from "@/lib/types";
 
 const emptyForm = { name: "", slug: "", emoji: "", order: "0" };
@@ -58,6 +58,39 @@ export default function CategoriesAdmin({ initialCategories }: { initialCategori
     if (!confirm("¿Eliminar esta categoría? También se eliminarán sus productos.")) return;
     await fetch(`/api/admin/categories/${id}`, { method: "DELETE" });
     setCategories((cs) => cs.filter((c) => c.id !== id));
+  };
+
+  const moveCategory = async (index: number, direction: -1 | 1) => {
+    const sorted = [...categories].sort((a, b) => a.order - b.order);
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= sorted.length) return;
+
+    const current = sorted[index];
+    const swapped = sorted[targetIndex];
+
+    const updatedCurrent = { ...current, order: swapped.order };
+    const updatedSwapped = { ...swapped, order: current.order };
+
+    await Promise.all([
+      fetch(`/api/admin/categories/${current.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: current.name, slug: current.slug, emoji: current.emoji, order: swapped.order }),
+      }),
+      fetch(`/api/admin/categories/${swapped.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: swapped.name, slug: swapped.slug, emoji: swapped.emoji, order: current.order }),
+      }),
+    ]);
+
+    setCategories((cs) =>
+      cs.map((c) => {
+        if (c.id === current.id) return updatedCurrent;
+        if (c.id === swapped.id) return updatedSwapped;
+        return c;
+      })
+    );
   };
 
   return (
@@ -141,8 +174,24 @@ export default function CategoriesAdmin({ initialCategories }: { initialCategori
           <p className="text-center text-gray-400 py-10">Sin categorías. ¡Creá la primera!</p>
         ) : (
           <div className="divide-y divide-gray-50">
-            {categories.map((c) => (
+            {[...categories].sort((a, b) => a.order - b.order).map((c, index, sorted) => (
               <div key={c.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50">
+                <div className="flex flex-col gap-0.5">
+                  <button
+                    disabled={index === 0}
+                    onClick={() => moveCategory(index, -1)}
+                    className="p-0.5 text-gray-300 hover:text-gray-600 disabled:opacity-20 disabled:cursor-not-allowed rounded"
+                  >
+                    <ChevronUp size={14} />
+                  </button>
+                  <button
+                    disabled={index === sorted.length - 1}
+                    onClick={() => moveCategory(index, 1)}
+                    className="p-0.5 text-gray-300 hover:text-gray-600 disabled:opacity-20 disabled:cursor-not-allowed rounded"
+                  >
+                    <ChevronDown size={14} />
+                  </button>
+                </div>
                 <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-xl">
                   {c.emoji || "🏷️"}
                 </div>

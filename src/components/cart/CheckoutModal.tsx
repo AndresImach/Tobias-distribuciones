@@ -68,7 +68,7 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
             <MessageCircle size={24} className="text-amber-600" />
           </div>
           <div>
-            <h3 className="font-bold text-lg">Confirmar pedido</h3>
+            <h3 className="font-bold text-lg text-gray-800">Confirmar pedido</h3>
             <p className="text-gray-500 text-sm">Se abrirá WhatsApp con tu pedido listo</p>
           </div>
         </div>
@@ -79,11 +79,11 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
               <span className="text-gray-700">
                 {quantity}x {product.name}
               </span>
-              <span className="font-medium">${(product.price * quantity).toLocaleString("es-AR")}</span>
+              <span className="font-medium text-gray-800">${(product.price * quantity).toLocaleString("es-AR")}</span>
             </div>
           ))}
           <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between font-bold">
-            <span>Total</span>
+            <span className="text-gray-800">Total</span>
             <span className="text-amber-600">${total().toLocaleString("es-AR")}</span>
           </div>
         </div>
