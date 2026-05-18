@@ -1,17 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Pencil, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { useState, useRef } from "react";
+import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, GripVertical } from "lucide-react";
 import type { Category } from "@/lib/types";
 
 const emptyForm = { name: "", slug: "", emoji: "", order: "0" };
 
 export default function CategoriesAdmin({ initialCategories }: { initialCategories: Category[] }) {
-  const [categories, setCategories] = useState(initialCategories);
+  const [categories, setCategories] = useState(
+    () => [...initialCategories].sort((a, b) => a.order - b.order)
+  );
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const dragCounter = useRef(0);
 
   const slugify = (s: string) =>
     s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
@@ -60,37 +65,67 @@ export default function CategoriesAdmin({ initialCategories }: { initialCategori
     setCategories((cs) => cs.filter((c) => c.id !== id));
   };
 
-  const moveCategory = async (index: number, direction: -1 | 1) => {
-    const sorted = [...categories].sort((a, b) => a.order - b.order);
-    const targetIndex = index + direction;
-    if (targetIndex < 0 || targetIndex >= sorted.length) return;
-
-    const current = sorted[index];
-    const swapped = sorted[targetIndex];
-
-    const updatedCurrent = { ...current, order: swapped.order };
-    const updatedSwapped = { ...swapped, order: current.order };
-
-    await Promise.all([
-      fetch(`/api/admin/categories/${current.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: current.name, slug: current.slug, emoji: current.emoji, order: swapped.order }),
-      }),
-      fetch(`/api/admin/categories/${swapped.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: swapped.name, slug: swapped.slug, emoji: swapped.emoji, order: current.order }),
-      }),
-    ]);
-
-    setCategories((cs) =>
-      cs.map((c) => {
-        if (c.id === current.id) return updatedCurrent;
-        if (c.id === swapped.id) return updatedSwapped;
-        return c;
-      })
+  // Persist new order to DB: assign sequential order values 0,1,2,...
+  const persistOrder = async (reordered: Category[]) => {
+    const updated = reordered.map((c, i) => ({ ...c, order: i }));
+    setCategories(updated);
+    await Promise.all(
+      updated.map((c) =>
+        fetch(`/api/admin/categories/${c.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: c.name, slug: c.slug, emoji: c.emoji, order: c.order }),
+        })
+      )
     );
+  };
+
+  const moveCategory = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= categories.length) return;
+    const next = [...categories];
+    [next[index], next[target]] = [next[target], next[index]];
+    persistOrder(next);
+  };
+
+  // Drag handlers
+  const onDragStart = (index: number) => {
+    setDragIndex(index);
+  };
+
+  const onDragEnter = (index: number) => {
+    dragCounter.current += 1;
+    setDragOverIndex(index);
+  };
+
+  const onDragLeave = () => {
+    dragCounter.current -= 1;
+    if (dragCounter.current === 0) setDragOverIndex(null);
+  };
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const onDrop = (index: number) => {
+    dragCounter.current = 0;
+    if (dragIndex === null || dragIndex === index) {
+      setDragIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+    const next = [...categories];
+    const [moved] = next.splice(dragIndex, 1);
+    next.splice(index, 0, moved);
+    setDragIndex(null);
+    setDragOverIndex(null);
+    persistOrder(next);
+  };
+
+  const onDragEnd = () => {
+    dragCounter.current = 0;
+    setDragIndex(null);
+    setDragOverIndex(null);
   };
 
   return (
@@ -108,7 +143,7 @@ export default function CategoriesAdmin({ initialCategories }: { initialCategori
       {showForm && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6">
-            <h3 className="font-bold text-lg mb-4">{editingId ? "Editar categoría" : "Nueva categoría"}</h3>
+            <h3 className="font-bold text-lg mb-4 text-gray-800">{editingId ? "Editar categoría" : "Nueva categoría"}</h3>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
@@ -174,9 +209,31 @@ export default function CategoriesAdmin({ initialCategories }: { initialCategori
           <p className="text-center text-gray-400 py-10">Sin categorías. ¡Creá la primera!</p>
         ) : (
           <div className="divide-y divide-gray-50">
-            {[...categories].sort((a, b) => a.order - b.order).map((c, index, sorted) => (
-              <div key={c.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50">
-                <div className="flex flex-col gap-0.5">
+            {categories.map((c, index) => (
+              <div
+                key={c.id}
+                draggable
+                onDragStart={() => onDragStart(index)}
+                onDragEnter={() => onDragEnter(index)}
+                onDragLeave={onDragLeave}
+                onDragOver={onDragOver}
+                onDrop={() => onDrop(index)}
+                onDragEnd={onDragEnd}
+                className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+                  dragOverIndex === index && dragIndex !== index
+                    ? "bg-green-50 border-t-2 border-green-400"
+                    : dragIndex === index
+                    ? "opacity-40 bg-gray-50"
+                    : "hover:bg-gray-50"
+                }`}
+              >
+                <div
+                  className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 flex-shrink-0"
+                  title="Arrastrar para reordenar"
+                >
+                  <GripVertical size={16} />
+                </div>
+                <div className="flex flex-col gap-0.5 flex-shrink-0">
                   <button
                     disabled={index === 0}
                     onClick={() => moveCategory(index, -1)}
@@ -185,21 +242,21 @@ export default function CategoriesAdmin({ initialCategories }: { initialCategori
                     <ChevronUp size={14} />
                   </button>
                   <button
-                    disabled={index === sorted.length - 1}
+                    disabled={index === categories.length - 1}
                     onClick={() => moveCategory(index, 1)}
                     className="p-0.5 text-gray-300 hover:text-gray-600 disabled:opacity-20 disabled:cursor-not-allowed rounded"
                   >
                     <ChevronDown size={14} />
                   </button>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-xl">
+                <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-xl flex-shrink-0">
                   {c.emoji || "🏷️"}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm text-gray-800">{c.name}</p>
                   <p className="text-xs text-gray-400 font-mono">{c.slug} · orden {c.order}</p>
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1 flex-shrink-0">
                   <button onClick={() => openEdit(c)} className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg">
                     <Pencil size={14} />
                   </button>

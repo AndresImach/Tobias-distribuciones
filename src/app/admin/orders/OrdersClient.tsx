@@ -22,9 +22,26 @@ export default function OrdersClient({ initialOrders }: { initialOrders: Order[]
     setOrders((os) => os.filter((o) => o.id !== id));
   };
 
+  const handleDeleteAll = async () => {
+    if (!confirm(`¿Borrar los ${orders.length} pedidos del historial? Esta acción no se puede deshacer.`)) return;
+    await Promise.all(orders.map((o) => fetch(`/api/orders/${o.id}`, { method: "DELETE" })));
+    setOrders([]);
+  };
+
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold text-gray-800">Pedidos</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-gray-800">Pedidos</h2>
+        {orders.length > 0 && (
+          <button
+            onClick={handleDeleteAll}
+            className="text-sm text-red-400 hover:text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+          >
+            <Trash2 size={13} />
+            Borrar todo
+          </button>
+        )}
+      </div>
 
       {orders.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center text-gray-400">

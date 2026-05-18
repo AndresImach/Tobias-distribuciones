@@ -18,7 +18,7 @@ export default function CartDrawer() {
       <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={closeCart} />
       <div className="fixed right-0 top-0 h-full w-full max-w-sm z-50 bg-white shadow-2xl flex flex-col">
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="font-bold text-lg flex items-center gap-2">
+          <h2 className="font-bold text-lg text-gray-800 flex items-center gap-2">
             <ShoppingBag size={20} className="text-green-500" />
             Tu pedido
             {itemCount() > 0 && (
@@ -56,7 +56,7 @@ export default function CartDrawer() {
                     >
                       <Minus size={12} />
                     </button>
-                    <span className="w-6 text-center text-sm font-semibold">{quantity}</span>
+                    <span className="w-6 text-center text-sm font-semibold text-gray-800">{quantity}</span>
                     <button
                       onClick={() => updateQuantity(product.id, quantity + 1)}
                       className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100"

@@ -97,7 +97,7 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Juan García"
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
           </div>
 
