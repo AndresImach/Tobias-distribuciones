@@ -27,7 +27,7 @@ export default function CartDrawer() {
               </span>
             )}
           </h2>
-          <button onClick={closeCart} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <button onClick={closeCart} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -52,14 +52,14 @@ export default function CartDrawer() {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => updateQuantity(product.id, quantity - 1)}
-                      className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100"
+                      className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 text-gray-600"
                     >
                       <Minus size={12} />
                     </button>
                     <span className="w-6 text-center text-sm font-semibold text-gray-800">{quantity}</span>
                     <button
                       onClick={() => updateQuantity(product.id, quantity + 1)}
-                      className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100"
+                      className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 text-gray-600"
                     >
                       <Plus size={12} />
                     </button>

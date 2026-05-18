@@ -58,7 +58,7 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
       <div className="relative bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 z-10">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-lg"
+          className="absolute top-4 right-4 p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
         >
           <X size={18} />
         </button>
