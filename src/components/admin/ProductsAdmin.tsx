@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Plus, Pencil, Trash2, Star, EyeOff, ImagePlus, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Star, EyeOff, ImagePlus, X, Search } from "lucide-react";
 import type { Product, Category } from "@/lib/types";
 
 type Props = {
@@ -21,6 +21,7 @@ const emptyForm = {
 
 export default function ProductsAdmin({ initialProducts, categories }: Props) {
   const [products, setProducts] = useState(initialProducts);
+  const [search, setSearch] = useState("");
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -29,6 +30,13 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
   const [uploading, setUploading] = useState(false);
   const [uploadedByFile, setUploadedByFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const filteredProducts = search.trim()
+    ? products.filter((p) =>
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.category?.name.toLowerCase().includes(search.toLowerCase())
+      )
+    : products;
 
   const openNew = () => {
     setForm(emptyForm);
@@ -165,6 +173,26 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
         >
           <Plus size={16} /> Nuevo producto
         </button>
+      </div>
+
+      <div className="relative">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar producto o categoría..."
+          className="w-full pl-9 pr-9 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400 bg-white"
+        />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            <X size={14} />
+          </button>
+        )}
       </div>
 
       {showForm && (
@@ -326,9 +354,11 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {products.length === 0 ? (
           <p className="text-center text-gray-400 py-10">No hay productos. ¡Creá el primero!</p>
+        ) : filteredProducts.length === 0 ? (
+          <p className="text-center text-gray-400 py-10">Sin resultados para &quot;{search}&quot;</p>
         ) : (
           <div className="divide-y divide-gray-50">
-            {products.map((p) => (
+            {filteredProducts.map((p) => (
               <div key={p.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50">
                 <div className="w-12 h-12 rounded-xl bg-gray-100 overflow-hidden flex-shrink-0">
                   {p.image ? (

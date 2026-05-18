@@ -58,7 +58,7 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
       <div className="relative bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 z-10">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-lg"
+          className="absolute top-4 right-4 p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
         >
           <X size={18} />
         </button>
@@ -68,7 +68,7 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
             <MessageCircle size={24} className="text-amber-600" />
           </div>
           <div>
-            <h3 className="font-bold text-lg">Confirmar pedido</h3>
+            <h3 className="font-bold text-lg text-gray-800">Confirmar pedido</h3>
             <p className="text-gray-500 text-sm">Se abrirá WhatsApp con tu pedido listo</p>
           </div>
         </div>
@@ -79,11 +79,11 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
               <span className="text-gray-700">
                 {quantity}x {product.name}
               </span>
-              <span className="font-medium">${(product.price * quantity).toLocaleString("es-AR")}</span>
+              <span className="font-medium text-gray-800">${(product.price * quantity).toLocaleString("es-AR")}</span>
             </div>
           ))}
           <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between font-bold">
-            <span>Total</span>
+            <span className="text-gray-800">Total</span>
             <span className="text-amber-600">${total().toLocaleString("es-AR")}</span>
           </div>
         </div>
@@ -97,7 +97,7 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Juan García"
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
           </div>
 
