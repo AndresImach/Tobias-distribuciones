@@ -39,7 +39,8 @@ function splitStatements(sql: string): string[] {
 }
 
 async function main() {
-  console.log(`→ Connected to ${DATABASE_URL!.replace(/\?.*$/, "")}`);
+  const repair = process.argv.includes("--repair");
+  console.log(`→ Connected to ${DATABASE_URL!.replace(/\?.*$/, "")}${repair ? " (REPAIR MODE)" : ""}`);
   await client.execute(PRISMA_MIGRATIONS_DDL);
 
   const migrationsDir = path.join(process.cwd(), "prisma", "migrations");
@@ -52,8 +53,11 @@ async function main() {
   const appliedSet = new Set(applied.rows.map((r) => r.migration_name as string));
 
   let appliedCount = 0;
+  let totalExecuted = 0;
+  let totalSkipped = 0;
   for (const name of migrationNames) {
-    if (appliedSet.has(name)) {
+    const alreadyApplied = appliedSet.has(name);
+    if (alreadyApplied && !repair) {
       console.log(`✓ ${name} (already applied)`);
       continue;
     }
@@ -63,7 +67,7 @@ async function main() {
     const checksum = crypto.createHash("sha256").update(sql).digest("hex");
     const id = crypto.randomUUID();
 
-    console.log(`→ Applying ${name} (${statements.length} statements)`);
+    console.log(`→ ${alreadyApplied ? "Re-checking" : "Applying"} ${name} (${statements.length} statements)`);
     let executed = 0;
     let skipped = 0;
     for (const stmt of statements) {
@@ -84,17 +88,25 @@ async function main() {
         }
       }
     }
-    await client.execute({
-      sql: `INSERT INTO _prisma_migrations (id, checksum, migration_name, finished_at, applied_steps_count)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?)`,
-      args: [id, checksum, name, executed],
-    });
+    if (!alreadyApplied) {
+      await client.execute({
+        sql: `INSERT INTO _prisma_migrations (id, checksum, migration_name, finished_at, applied_steps_count)
+              VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?)`,
+        args: [id, checksum, name, executed],
+      });
+    }
     appliedCount++;
+    totalExecuted += executed;
+    totalSkipped += skipped;
     const summary = skipped > 0 ? `${executed} applied, ${skipped} skipped` : `${executed} applied`;
     console.log(`✓ ${name} (${summary})`);
   }
 
-  console.log(appliedCount === 0 ? "\nNo pending migrations." : `\n${appliedCount} migration(s) applied.`);
+  if (repair) {
+    console.log(`\nRepair complete. ${totalExecuted} statement(s) applied, ${totalSkipped} already present.`);
+  } else {
+    console.log(appliedCount === 0 ? "\nNo pending migrations." : `\n${appliedCount} migration(s) applied.`);
+  }
 }
 
 main()
