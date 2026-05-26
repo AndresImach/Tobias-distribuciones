@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Plus, Pencil, Trash2, Star, EyeOff, ImagePlus, X, Search } from "lucide-react";
-import type { Product, Category } from "@/lib/types";
+import { useState, useRef, useEffect } from "react";
+import { Plus, Pencil, Trash2, Star, EyeOff, ImagePlus, X, Search, Link2, Link2Off } from "lucide-react";
+import type { Product, Category, BorgestProduct } from "@/lib/types";
+import { resolvePrice } from "@/lib/price";
 
 type Props = {
-  initialProducts: (Product & { category: Category })[];
+  initialProducts: (Product & { category: Category; borgestProduct: BorgestProduct | null })[];
   categories: Category[];
 };
 
@@ -17,12 +18,15 @@ const emptyForm = {
   available: true,
   featured: false,
   categoryId: "",
+  borgestProductId: null as number | null,
+  priceList: 1,
 };
 
 export default function ProductsAdmin({ initialProducts, categories }: Props) {
   const [products, setProducts] = useState(initialProducts);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState(emptyForm);
+  const [selectedBorgest, setSelectedBorgest] = useState<BorgestProduct | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -40,13 +44,14 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
 
   const openNew = () => {
     setForm(emptyForm);
+    setSelectedBorgest(null);
     setImagePreview("");
     setUploadedByFile(false);
     setEditingId(null);
     setShowForm(true);
   };
 
-  const openEdit = (p: Product & { category: Category }) => {
+  const openEdit = (p: Product & { category: Category; borgestProduct: BorgestProduct | null }) => {
     setForm({
       name: p.name,
       description: p.description,
@@ -55,7 +60,10 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
       available: p.available,
       featured: p.featured,
       categoryId: String(p.categoryId),
+      borgestProductId: p.borgestProductId,
+      priceList: p.priceList,
     });
+    setSelectedBorgest(p.borgestProduct);
     setImagePreview(p.image);
     setUploadedByFile(false);
     setEditingId(p.id);
@@ -141,7 +149,13 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, price: Number(form.price), categoryId: Number(form.categoryId) }),
+      body: JSON.stringify({
+        ...form,
+        price: Number(form.price) || 0,
+        categoryId: Number(form.categoryId),
+        borgestProductId: form.borgestProductId,
+        priceList: form.priceList,
+      }),
     });
 
     const saved = await res.json();
@@ -161,6 +175,11 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
     if (!confirm("¿Eliminar este producto?")) return;
     await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
     setProducts((ps) => ps.filter((p) => p.id !== id));
+  };
+
+  const handleBorgestSelect = (b: BorgestProduct | null) => {
+    setSelectedBorgest(b);
+    setForm((f) => ({ ...f, borgestProductId: b?.id ?? null }));
   };
 
   return (
@@ -211,15 +230,18 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Precio {selectedBorgest && <span className="text-xs text-gray-400">(desde Borgest)</span>}
+                  </label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
-                    placeholder="Sin precio"
+                    placeholder={selectedBorgest ? "Auto" : "Sin precio"}
                     value={form.price}
                     onChange={(e) => setForm({ ...form, price: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400"
+                    disabled={!!selectedBorgest}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:bg-gray-50 disabled:text-gray-400"
                   />
                 </div>
                 <div>
@@ -310,6 +332,15 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
                   </div>
                 </div>
 
+                <div className="sm:col-span-2 border-t border-gray-100 pt-3">
+                  <BorgestLinker
+                    selected={selectedBorgest}
+                    priceList={form.priceList}
+                    onSelect={handleBorgestSelect}
+                    onPriceListChange={(n) => setForm((f) => ({ ...f, priceList: n }))}
+                  />
+                </div>
+
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -358,37 +389,196 @@ export default function ProductsAdmin({ initialProducts, categories }: Props) {
           <p className="text-center text-gray-400 py-10">Sin resultados para &quot;{search}&quot;</p>
         ) : (
           <div className="divide-y divide-gray-50">
-            {filteredProducts.map((p) => (
-              <div key={p.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50">
-                <div className="w-12 h-12 rounded-xl bg-gray-100 overflow-hidden flex-shrink-0">
-                  {p.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 text-xl">📦</div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <p className="font-medium text-sm text-gray-800 truncate">{p.name}</p>
-                    {p.featured && <Star size={12} className="text-yellow-400 fill-yellow-400 flex-shrink-0" />}
-                    {!p.available && <EyeOff size={12} className="text-gray-300 flex-shrink-0" />}
+            {filteredProducts.map((p) => {
+              const displayPrice = resolvePrice(p);
+              return (
+                <div key={p.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50">
+                  <div className="w-12 h-12 rounded-xl bg-gray-100 overflow-hidden flex-shrink-0">
+                    {p.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300 text-xl">📦</div>
+                    )}
                   </div>
-                  <p className="text-xs text-gray-400">{p.category?.name} · {p.price ? `$${p.price.toLocaleString("es-AR")}` : "Consultar"}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-medium text-sm text-gray-800 truncate">{p.name}</p>
+                      {p.featured && <Star size={12} className="text-yellow-400 fill-yellow-400 flex-shrink-0" />}
+                      {!p.available && <EyeOff size={12} className="text-gray-300 flex-shrink-0" />}
+                      {p.borgestProduct && <Link2 size={12} className="text-blue-400 flex-shrink-0" />}
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      {p.category?.name} · {displayPrice ? `$${displayPrice.toLocaleString("es-AR")}` : "Consultar"}
+                      {p.borgestProduct && (
+                        <span className="ml-1 text-blue-400">· stock {p.borgestProduct.stock}</span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={() => openEdit(p)} className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg">
+                      <Pencil size={14} />
+                    </button>
+                    <button onClick={() => handleDelete(p.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <button onClick={() => openEdit(p)} className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg">
-                    <Pencil size={14} />
-                  </button>
-                  <button onClick={() => handleDelete(p.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function BorgestLinker({
+  selected,
+  priceList,
+  onSelect,
+  onPriceListChange,
+}: {
+  selected: BorgestProduct | null;
+  priceList: number;
+  onSelect: (b: BorgestProduct | null) => void;
+  onPriceListChange: (n: number) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<BorgestProduct[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+
+  useEffect(() => {
+    if (selected) return;
+    const q = query.trim();
+    if (q.length < 2) return;
+    const t = setTimeout(() => {
+      setSearching(true);
+      fetch(`/api/admin/borgest-productos?search=${encodeURIComponent(q)}`)
+        .then((r) => r.json())
+        .then((data: BorgestProduct[]) => {
+          setResults(data);
+          setShowResults(true);
+        })
+        .finally(() => setSearching(false));
+    }, 250);
+    return () => clearTimeout(t);
+  }, [query, selected]);
+
+  const priceForTier = (b: BorgestProduct, tier: number): number | null => {
+    switch (tier) {
+      case 2: return b.price2;
+      case 3: return b.price3;
+      case 4: return b.price4;
+      default: return b.price1;
+    }
+  };
+
+  if (selected) {
+    return (
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 space-y-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <Link2 size={14} className="text-blue-500 flex-shrink-0" />
+              <span className="text-xs text-blue-600 font-medium">Vinculado a Borgest</span>
+            </div>
+            <p className="text-sm font-medium text-gray-800 truncate mt-1">{selected.name}</p>
+            <p className="text-xs text-gray-500">
+              ID {selected.id}
+              {selected.barcode && ` · ${selected.barcode}`}
+              · stock {selected.stock}
+              · {selected.estado}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onSelect(null)}
+            className="text-gray-400 hover:text-red-500 p-1 rounded"
+            title="Desvincular"
+          >
+            <Link2Off size={14} />
+          </button>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Lista de precios a usar</label>
+          <div className="grid grid-cols-4 gap-1">
+            {[1, 2, 3, 4].map((n) => {
+              const tierPrice = priceForTier(selected, n);
+              const disabled = tierPrice == null;
+              const active = priceList === n;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onPriceListChange(n)}
+                  className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    active
+                      ? "bg-blue-500 text-white"
+                      : disabled
+                      ? "bg-gray-100 text-gray-300 cursor-not-allowed"
+                      : "bg-white border border-gray-200 text-gray-600 hover:border-blue-300"
+                  }`}
+                >
+                  <div>L{n}</div>
+                  <div className={active ? "" : "text-[10px]"}>
+                    {tierPrice != null ? `$${tierPrice.toLocaleString("es-AR")}` : "—"}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-700">
+        Vincular con producto de Borgest <span className="text-xs text-gray-400 font-normal">(opcional)</span>
+      </label>
+      <div className="relative">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => setShowResults(true)}
+          onBlur={() => setTimeout(() => setShowResults(false), 200)}
+          placeholder="Buscar por nombre, código de barras o ID..."
+          className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-300"
+        />
+        {showResults && (results.length > 0 || (query.length >= 2 && !searching)) && (
+          <div className="absolute z-10 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+            {results.length === 0 ? (
+              <p className="px-3 py-2 text-xs text-gray-400">Sin resultados</p>
+            ) : (
+              results.map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  onClick={() => {
+                    onSelect(b);
+                    setQuery("");
+                    setResults([]);
+                  }}
+                  className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b border-gray-50 last:border-0"
+                >
+                  <p className="text-sm font-medium text-gray-800 truncate">{b.name}</p>
+                  <p className="text-xs text-gray-400">
+                    #{b.id}{b.barcode && ` · ${b.barcode}`} · ${b.price1.toLocaleString("es-AR")} · stock {b.stock}
+                  </p>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+      {searching && <p className="text-xs text-gray-400">Buscando...</p>}
     </div>
   );
 }

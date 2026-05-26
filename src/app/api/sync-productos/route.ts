@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 
-const SYNC_CATEGORY_SLUG = "sincronizados";
-
 type BorgestProducto = {
   producto_id: number;
   producto_nombre: string;
@@ -82,15 +80,6 @@ function validateItem(item: unknown, index: number): { ok: true; value: BorgestP
   };
 }
 
-async function getSyncCategoryId(): Promise<number> {
-  const existing = await prisma.category.findUnique({ where: { slug: SYNC_CATEGORY_SLUG } });
-  if (existing) return existing.id;
-  const created = await prisma.category.create({
-    data: { name: "Sincronizados", slug: SYNC_CATEGORY_SLUG, emoji: "📦", order: 999 },
-  });
-  return created.id;
-}
-
 export async function POST(request: Request) {
   if (!isAuthorized(request.headers.get("x-api-key"))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -119,51 +108,45 @@ export async function POST(request: Request) {
     return NextResponse.json({ processed: 0, created: 0, updated: 0, errors }, { status: 400 });
   }
 
-  const syncCategoryId = await getSyncCategoryId();
   const existingIds = new Set(
     (
-      await prisma.product.findMany({
-        where: { externalId: { in: valid.map((p) => p.producto_id) } },
-        select: { externalId: true },
+      await prisma.borgestProduct.findMany({
+        where: { id: { in: valid.map((p) => p.producto_id) } },
+        select: { id: true },
       })
-    ).map((p) => p.externalId),
+    ).map((p) => p.id),
   );
 
   let created = 0;
   let updated = 0;
 
   for (const p of valid) {
-    const available = p.producto_estado.trim().toUpperCase() === "DISPONIBLE";
-    const image = p.producto_foto ?? "";
-    const barcode = p.producto_codigobarras ?? null;
     const isUpdate = existingIds.has(p.producto_id);
-
     try {
-      await prisma.product.upsert({
-        where: { externalId: p.producto_id },
+      await prisma.borgestProduct.upsert({
+        where: { id: p.producto_id },
         create: {
-          externalId: p.producto_id,
+          id: p.producto_id,
           name: p.producto_nombre,
-          price: p.producto_precioventa1,
+          barcode: p.producto_codigobarras,
+          price1: p.producto_precioventa1,
           price2: p.producto_precioventa2,
           price3: p.producto_precioventa3,
           price4: p.producto_precioventa4,
           stock: p.producto_stock ?? 0,
-          barcode,
-          image,
-          available,
-          categoryId: syncCategoryId,
+          estado: p.producto_estado,
+          foto: p.producto_foto,
         },
         update: {
           name: p.producto_nombre,
-          price: p.producto_precioventa1,
+          barcode: p.producto_codigobarras,
+          price1: p.producto_precioventa1,
           price2: p.producto_precioventa2,
           price3: p.producto_precioventa3,
           price4: p.producto_precioventa4,
           ...(p.producto_stock !== null ? { stock: p.producto_stock } : {}),
-          barcode,
-          image,
-          available,
+          estado: p.producto_estado,
+          foto: p.producto_foto,
         },
       });
       if (isUpdate) updated++;
