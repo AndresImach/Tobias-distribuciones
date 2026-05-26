@@ -9,6 +9,10 @@ type BorgestProducto = {
   producto_nombre: string;
   producto_codigobarras?: string | null;
   producto_precioventa1: number;
+  producto_precioventa2?: number | null;
+  producto_precioventa3?: number | null;
+  producto_precioventa4?: number | null;
+  producto_stock?: number | null;
   producto_estado: string;
   producto_foto?: string | null;
 };
@@ -39,6 +43,28 @@ function validateItem(item: unknown, index: number): { ok: true; value: BorgestP
   if (typeof o.producto_estado !== "string") {
     return { ok: false, error: `item ${index} (id=${o.producto_id}): producto_estado must be a string` };
   }
+
+  const optionalPrice = (key: "producto_precioventa2" | "producto_precioventa3" | "producto_precioventa4") => {
+    const v = o[key];
+    if (v === undefined || v === null) return { ok: true, value: null } as const;
+    if (typeof v === "number" && Number.isFinite(v)) return { ok: true, value: v } as const;
+    return { ok: false, error: `item ${index} (id=${o.producto_id}): ${key} must be a number or null` } as const;
+  };
+  const p2 = optionalPrice("producto_precioventa2");
+  if (!p2.ok) return { ok: false, error: p2.error };
+  const p3 = optionalPrice("producto_precioventa3");
+  if (!p3.ok) return { ok: false, error: p3.error };
+  const p4 = optionalPrice("producto_precioventa4");
+  if (!p4.ok) return { ok: false, error: p4.error };
+
+  let stock: number | null = null;
+  if (o.producto_stock !== undefined && o.producto_stock !== null) {
+    if (typeof o.producto_stock !== "number" || !Number.isFinite(o.producto_stock) || !Number.isInteger(o.producto_stock) || o.producto_stock < 0) {
+      return { ok: false, error: `item ${index} (id=${o.producto_id}): producto_stock must be a non-negative integer` };
+    }
+    stock = o.producto_stock;
+  }
+
   return {
     ok: true,
     value: {
@@ -46,6 +72,10 @@ function validateItem(item: unknown, index: number): { ok: true; value: BorgestP
       producto_nombre: o.producto_nombre,
       producto_codigobarras: typeof o.producto_codigobarras === "string" ? o.producto_codigobarras : null,
       producto_precioventa1: o.producto_precioventa1,
+      producto_precioventa2: p2.value,
+      producto_precioventa3: p3.value,
+      producto_precioventa4: p4.value,
+      producto_stock: stock,
       producto_estado: o.producto_estado,
       producto_foto: typeof o.producto_foto === "string" ? o.producto_foto : null,
     },
@@ -115,6 +145,10 @@ export async function POST(request: Request) {
           externalId: p.producto_id,
           name: p.producto_nombre,
           price: p.producto_precioventa1,
+          price2: p.producto_precioventa2,
+          price3: p.producto_precioventa3,
+          price4: p.producto_precioventa4,
+          stock: p.producto_stock ?? 0,
           barcode,
           image,
           available,
@@ -123,6 +157,10 @@ export async function POST(request: Request) {
         update: {
           name: p.producto_nombre,
           price: p.producto_precioventa1,
+          price2: p.producto_precioventa2,
+          price3: p.producto_precioventa3,
+          price4: p.producto_precioventa4,
+          ...(p.producto_stock !== null ? { stock: p.producto_stock } : {}),
           barcode,
           image,
           available,

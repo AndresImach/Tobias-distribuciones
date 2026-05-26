@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Product" ADD COLUMN "price2" REAL;
+ALTER TABLE "Product" ADD COLUMN "price3" REAL;
+ALTER TABLE "Product" ADD COLUMN "price4" REAL;
+ALTER TABLE "Product" ADD COLUMN "stock" INTEGER NOT NULL DEFAULT 0;
