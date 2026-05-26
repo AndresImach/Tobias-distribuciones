@@ -18,10 +18,12 @@ model Category {
 
 model Product {
   id          Int      @id @default(autoincrement())
+  externalId  Int?     @unique
   name        String
   description String   @default("")
   price       Float
   image       String   @default("")
+  barcode     String?
   available   Boolean  @default(true)
   featured    Boolean  @default(false)
   categoryId  Int
