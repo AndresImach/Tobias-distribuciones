@@ -28,10 +28,14 @@ const PRISMA_MIGRATIONS_DDL = `
 `;
 
 function splitStatements(sql: string): string[] {
-  return sql
+  const withoutComments = sql
+    .split(/\r?\n/)
+    .filter((line) => !line.trim().startsWith("--"))
+    .join("\n");
+  return withoutComments
     .split(/;\s*(?:\r?\n|$)/)
     .map((s) => s.trim())
-    .filter((s) => s.length > 0 && !s.startsWith("--"));
+    .filter((s) => s.length > 0);
 }
 
 async function main() {
@@ -60,16 +64,34 @@ async function main() {
     const id = crypto.randomUUID();
 
     console.log(`→ Applying ${name} (${statements.length} statements)`);
+    let executed = 0;
+    let skipped = 0;
     for (const stmt of statements) {
-      await client.execute(stmt);
+      try {
+        await client.execute(stmt);
+        executed++;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        // Idempotency: treat "already exists" / "duplicate column" as no-op.
+        // This lets the script baseline a DB that already has the schema
+        // (e.g., from prisma db push or a previous out-of-band setup).
+        if (/already exists|duplicate column/i.test(msg)) {
+          const head = stmt.replace(/\s+/g, " ").slice(0, 60);
+          console.log(`  · skipped (already present): ${head}...`);
+          skipped++;
+        } else {
+          throw err;
+        }
+      }
     }
     await client.execute({
       sql: `INSERT INTO _prisma_migrations (id, checksum, migration_name, finished_at, applied_steps_count)
             VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?)`,
-      args: [id, checksum, name, statements.length],
+      args: [id, checksum, name, executed],
     });
     appliedCount++;
-    console.log(`✓ ${name} (applied)`);
+    const summary = skipped > 0 ? `${executed} applied, ${skipped} skipped` : `${executed} applied`;
+    console.log(`✓ ${name} (${summary})`);
   }
 
   console.log(appliedCount === 0 ? "\nNo pending migrations." : `\n${appliedCount} migration(s) applied.`);
