@@ -17,17 +17,43 @@ model Category {
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String   @default("")
-  price       Float
-  image       String   @default("")
-  available   Boolean  @default(true)
-  featured    Boolean  @default(false)
-  categoryId  Int
-  category    Category @relation(fields: [categoryId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               Int             @id @default(autoincrement())
+  externalId       Int?            @unique
+  name             String
+  description      String          @default("")
+  price            Float
+  price2           Float?
+  price3           Float?
+  price4           Float?
+  stock            Int             @default(0)
+  image            String          @default("")
+  barcode          String?
+  available        Boolean         @default(true)
+  featured         Boolean         @default(false)
+  categoryId       Int
+  category         Category        @relation(fields: [categoryId], references: [id])
+  borgestProductId Int?
+  borgestProduct   BorgestProduct? @relation(fields: [borgestProductId], references: [id], onDelete: SetNull)
+  priceList        Int             @default(1)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([borgestProductId])
+}
+
+model BorgestProduct {
+  id        Int       @id
+  name      String
+  barcode   String?
+  price1    Float
+  price2    Float?
+  price3    Float?
+  price4    Float?
+  stock     Int       @default(0)
+  estado    String
+  foto      String?
+  syncedAt  DateTime  @updatedAt
+  products  Product[]
 }
 
 model Order {

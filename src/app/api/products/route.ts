@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { resolvePrice } from "@/lib/price";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -18,9 +19,9 @@ export async function GET(request: Request) {
 
   const products = await prisma.product.findMany({
     where,
-    include: { category: true },
+    include: { category: true, borgestProduct: true },
     orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
   });
 
-  return NextResponse.json(products);
+  return NextResponse.json(products.map((p) => ({ ...p, price: resolvePrice(p) })));
 }
