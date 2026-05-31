@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
+import bcrypt from "bcryptjs";
 import path from "path";
 
 const dbPath = path.resolve(process.cwd(), "prisma/dev.db");
@@ -64,6 +65,22 @@ async function main() {
   }
 
   console.log(`✓ Seeded ${products.length} products in ${categories.length} categories`);
+
+  // Admin user for the /admin panel login.
+  const adminEmail = (process.env.ADMIN_EMAIL ?? "admin@tobias.com").toLowerCase();
+  const adminPassword = process.env.ADMIN_PASSWORD ?? "admin1234";
+  const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+  await prisma.adminUser.upsert({
+    where: { email: adminEmail },
+    update: { password: hashedPassword },
+    create: { email: adminEmail, password: hashedPassword },
+  });
+
+  console.log(`✓ Admin user ready: ${adminEmail}`);
+  if (!process.env.ADMIN_PASSWORD) {
+    console.log("  ⚠ Using default password 'admin1234' — set ADMIN_PASSWORD to override.");
+  }
 }
 
 main()
