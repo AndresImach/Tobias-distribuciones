@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { LayoutDashboard, Package, Tag, ShoppingBag, ArrowLeft } from "lucide-react";
+import { redirect } from "next/navigation";
+import { LayoutDashboard, Package, Tag, ShoppingBag, ArrowLeft, LogOut } from "lucide-react";
+import { getSession } from "@/lib/session";
+import { logout } from "../login/actions";
 
 export const metadata = { title: "Admin – Tobias Distribuciones" };
 
@@ -10,7 +13,12 @@ const navItems = [
   { href: "/admin/orders", label: "Pedidos", icon: ShoppingBag },
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  // Defense in depth: the Proxy already guards these routes, but re-check
+  // here so the panel can never render without a valid session.
+  const session = await getSession();
+  if (!session) redirect("/admin/login");
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
@@ -24,6 +32,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <LayoutDashboard size={18} className="text-green-500 shrink-0" />
             <span>Panel de administración</span>
           </h1>
+          <form action={logout} className="ml-auto shrink-0">
+            <button
+              type="submit"
+              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-red-600 transition-colors"
+              title={session.email}
+            >
+              <LogOut size={16} />
+              <span className="hidden sm:inline">Salir</span>
+            </button>
+          </form>
         </div>
       </header>
 
