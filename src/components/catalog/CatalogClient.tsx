@@ -48,9 +48,15 @@ export default function CatalogClient({ initialCategories }: Props) {
     setSearch("");
   };
 
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    // La búsqueda abarca todas las categorías, no solo la seleccionada
+    if (value) setSelectedCategory("all");
+  };
+
   return (
     <div className="space-y-4">
-      <SearchBar value={search} onChange={setSearch} />
+      <SearchBar value={search} onChange={handleSearchChange} />
       <CategoryFilter
         categories={initialCategories}
         selected={selectedCategory}
