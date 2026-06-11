@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import CatalogClient from "@/components/catalog/CatalogClient";
 import CartButton from "@/components/cart/CartButton";
+import MobileCartBar from "@/components/cart/MobileCartBar";
+import WhatsAppFab from "@/components/WhatsAppFab";
 import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import Image from "next/image";
 import { MapPin, Clock } from "lucide-react";
@@ -21,7 +23,7 @@ export default async function HomePage() {
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-30 border-b border-brand-950/5 bg-white/85 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <Image
             src="/logo.png"
             alt="Tobias Distribuciones"
@@ -51,7 +53,7 @@ export default async function HomePage() {
       <section className="relative overflow-hidden bg-brand-950">
         <div className="absolute -right-16 -top-24 h-72 w-72 rounded-full bg-caramel-500/20 blur-3xl" />
         <div className="absolute -bottom-32 -left-20 h-80 w-80 rounded-full bg-brand-500/25 blur-3xl" />
-        <div className="relative mx-auto max-w-5xl px-4 py-12 sm:py-16">
+        <div className="relative mx-auto max-w-6xl px-4 py-12 sm:py-16">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-caramel-300">
             Distribuidora mayorista · Tucumán
           </p>
@@ -78,26 +80,17 @@ export default async function HomePage() {
       </section>
 
       {/* Catalog */}
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-20">
-        <CatalogClient initialCategories={categories} />
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 lg:pb-20">
+        <CatalogClient initialCategories={categories} waHref={waHref} />
       </main>
 
-      {/* Floating WhatsApp button */}
-      {waHref && (
-        <a
-          href={waHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Escribinos por WhatsApp"
-          className="fixed bottom-5 right-5 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-wa-500 text-white shadow-lg shadow-wa-500/40 transition-transform hover:scale-105 active:scale-95"
-        >
-          <WhatsAppIcon className="h-7 w-7" />
-        </a>
-      )}
+      {/* Mobile sticky cart bar + floating WhatsApp button */}
+      <MobileCartBar />
+      {waHref && <WhatsAppFab href={waHref} />}
 
       {/* Footer */}
       <footer className="bg-brand-950 text-cream-50">
-        <div className="mx-auto max-w-5xl px-4 py-12">
+        <div className="mx-auto max-w-6xl px-4 py-12">
           <div className="grid gap-10 sm:grid-cols-3">
             <div>
               <p className="font-display text-2xl">Tobias Distribuciones</p>
