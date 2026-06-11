@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { X, ShoppingCart, Star, Plus, Minus } from "lucide-react";
+import { X, Star, Plus, Minus, ShoppingBag } from "lucide-react";
 import { useEffect } from "react";
 import { useCartStore } from "@/store/cartStore";
 import type { Product } from "@/lib/types";
@@ -29,71 +29,84 @@ export default function ProductModal({ product, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center sm:p-4"
+      className="fixed inset-0 z-50 flex animate-fade-in items-end justify-center bg-brand-950/60 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="flex max-h-[92vh] w-full animate-sheet-up flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-w-md sm:animate-scale-in sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Image */}
-        <div className="relative h-56 sm:h-64 bg-amber-50 shrink-0">
+        <div className="relative h-60 shrink-0 bg-cream-100 sm:h-72">
+          <div className="absolute left-1/2 top-2.5 z-10 h-1 w-10 -translate-x-1/2 rounded-full bg-white/80 sm:hidden" />
           {product.image ? (
             <Image src={product.image} alt={product.name} fill className="object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-7xl">🥐</div>
+            <div className="flex h-full w-full items-center justify-center text-8xl opacity-60">
+              {product.category?.emoji || "🧁"}
+            </div>
           )}
           {product.featured && (
-            <span className="absolute top-3 left-3 bg-amber-400 text-amber-900 text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1">
+            <span className="absolute left-3.5 top-3.5 flex items-center gap-1 rounded-full bg-caramel-500 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm">
               <Star size={10} fill="currentColor" /> Destacado
             </span>
           )}
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 bg-white/90 hover:bg-white rounded-full p-1.5 shadow transition-colors"
+            className="absolute right-3.5 top-3.5 rounded-full bg-white/90 p-2 text-brand-950/70 shadow backdrop-blur transition-colors hover:bg-white hover:text-brand-950"
             aria-label="Cerrar"
           >
-            <X size={16} className="text-gray-600" />
+            <X size={16} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-5 overflow-y-auto flex flex-col gap-3">
+        <div className="flex flex-col gap-3 overflow-y-auto p-5 sm:p-6">
           <div>
-            <p className="text-xs text-amber-500 font-medium mb-1">{product.category?.name}</p>
-            <h2 className="text-lg font-bold text-gray-800 leading-snug">{product.name}</h2>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-caramel-600">
+              {product.category?.name}
+            </p>
+            <h2 className="mt-1 font-display text-2xl leading-snug text-brand-950">
+              {product.name}
+            </h2>
           </div>
 
           {product.description && (
-            <p className="text-sm text-gray-600 leading-relaxed">{product.description}</p>
+            <p className="text-sm leading-relaxed text-brand-950/55">{product.description}</p>
           )}
 
-          <div className="flex items-center justify-between pt-1">
-            <span className="text-2xl font-bold text-amber-700">
-              {product.price ? `$${product.price.toLocaleString("es-AR")}` : "Consultar"}
-            </span>
+          <div className="mt-1 flex items-center justify-between gap-3 border-t border-brand-950/5 pt-4">
+            {product.price ? (
+              <span className="text-2xl font-bold tracking-tight text-brand-900">
+                ${product.price.toLocaleString("es-AR")}
+              </span>
+            ) : (
+              <span className="text-lg font-semibold text-brand-900/60">Consultar</span>
+            )}
 
             {quantity === 0 ? (
               <button
                 onClick={() => addItem(product)}
-                className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl px-4 py-2 flex items-center gap-2 text-sm font-medium transition-all"
+                className="flex items-center gap-2 rounded-full bg-brand-900 px-5 py-3 text-sm font-semibold text-cream-50 shadow-md shadow-brand-900/20 transition-all hover:bg-brand-700 active:scale-95"
               >
-                <ShoppingCart size={15} /> Agregar
+                <ShoppingBag size={16} /> Agregar al pedido
               </button>
             ) : (
-              <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-xl px-1">
+              <div className="flex items-center rounded-full bg-brand-900 text-cream-50 shadow-md shadow-brand-900/20">
                 <button
                   onClick={() => updateQuantity(product.id, quantity - 1)}
-                  className="w-8 h-8 flex items-center justify-center text-amber-600 hover:bg-amber-100 rounded-lg transition-colors"
+                  className="flex h-11 w-10 items-center justify-center rounded-full transition-colors hover:bg-white/10"
+                  aria-label="Quitar uno"
                 >
-                  <Minus size={14} />
+                  <Minus size={15} />
                 </button>
-                <span className="w-6 text-center font-bold text-amber-700">{quantity}</span>
+                <span className="w-6 text-center font-bold">{quantity}</span>
                 <button
                   onClick={() => updateQuantity(product.id, quantity + 1)}
-                  className="w-8 h-8 flex items-center justify-center text-amber-600 hover:bg-amber-100 rounded-lg transition-colors"
+                  className="flex h-11 w-10 items-center justify-center rounded-full transition-colors hover:bg-white/10"
+                  aria-label="Agregar uno"
                 >
-                  <Plus size={14} />
+                  <Plus size={15} />
                 </button>
               </div>
             )}

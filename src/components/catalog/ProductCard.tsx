@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ShoppingCart, Star, Plus, Minus } from "lucide-react";
+import { Star, Plus, Minus } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import type { Product } from "@/lib/types";
 
@@ -17,66 +17,74 @@ export default function ProductCard({ product, onOpenModal }: Props) {
 
   return (
     <div
-      className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group cursor-pointer flex flex-col h-full"
+      className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-brand-950/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-950/10 hover:ring-brand-950/10"
       onClick={onOpenModal}
     >
-      <div className="relative aspect-square bg-amber-50 overflow-hidden shrink-0">
+      <div className="relative aspect-square shrink-0 overflow-hidden bg-cream-100">
         {product.image ? (
           <Image
             src={product.image}
             alt={product.name}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-5xl">
-            🥐
+          <div className="flex h-full w-full items-center justify-center text-6xl opacity-60">
+            {product.category?.emoji || "🧁"}
           </div>
         )}
         {product.featured && (
-          <span className="absolute top-2 left-2 bg-amber-400 text-amber-900 text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1">
+          <span className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-full bg-caramel-500 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm">
             <Star size={10} fill="currentColor" /> Destacado
           </span>
         )}
       </div>
 
-      <div className="p-3 flex flex-col flex-1">
-        <p className="text-xs text-amber-500 mb-1 font-medium">{product.category?.name}</p>
-        <h3 className="font-semibold text-gray-800 text-sm leading-tight mb-1 line-clamp-2">
+      <div className="flex flex-1 flex-col p-3.5">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-caramel-600">
+          {product.category?.name}
+        </p>
+        <h3 className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-brand-950">
           {product.name}
         </h3>
         {product.description && (
-          <p className="text-xs text-gray-500 line-clamp-2">{product.description}</p>
+          <p className="mt-1 line-clamp-2 text-xs text-brand-950/45">{product.description}</p>
         )}
-        <div className="flex items-center justify-between mt-auto pt-2">
-          <span className="text-lg font-bold text-amber-700">
-            {product.price ? `$${product.price.toLocaleString("es-AR")}` : "Consultar"}
-          </span>
+        <div className="mt-auto flex items-center justify-between gap-2 pt-3">
+          {product.price ? (
+            <span className="text-lg font-bold tracking-tight text-brand-900">
+              ${product.price.toLocaleString("es-AR")}
+            </span>
+          ) : (
+            <span className="text-sm font-semibold text-brand-900/60">Consultar</span>
+          )}
 
           {quantity === 0 ? (
             <button
               onClick={(e) => { e.stopPropagation(); addItem(product); }}
-              className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl p-2 transition-all"
-              aria-label={`Agregar ${product.name} al carrito`}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-900 text-cream-50 shadow-sm transition-all hover:bg-brand-700 active:scale-90"
+              aria-label={`Agregar ${product.name} al pedido`}
             >
-              <ShoppingCart size={16} />
+              <Plus size={16} strokeWidth={2.5} />
             </button>
           ) : (
             <div
-              className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-xl px-1"
+              className="flex shrink-0 items-center rounded-full bg-brand-900 text-cream-50 shadow-sm"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => updateQuantity(product.id, quantity - 1)}
-                className="w-7 h-7 flex items-center justify-center text-amber-600 hover:bg-amber-100 rounded-lg transition-colors"
+                className="flex h-9 w-8 items-center justify-center rounded-full transition-colors hover:bg-white/10"
+                aria-label="Quitar uno"
               >
                 <Minus size={13} />
               </button>
-              <span className="w-5 text-center text-sm font-bold text-amber-700">{quantity}</span>
+              <span className="w-5 text-center text-sm font-bold">{quantity}</span>
               <button
                 onClick={() => updateQuantity(product.id, quantity + 1)}
-                className="w-7 h-7 flex items-center justify-center text-amber-600 hover:bg-amber-100 rounded-lg transition-colors"
+                className="flex h-9 w-8 items-center justify-center rounded-full transition-colors hover:bg-white/10"
+                aria-label="Agregar uno"
               >
                 <Plus size={13} />
               </button>

@@ -1,28 +1,77 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-fraunces);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@theme {
+  /* Navy brand scale, anchored on the logo color */
+  --color-brand-50: #f4f6fa;
+  --color-brand-100: #e7ecf4;
+  --color-brand-200: #cad6e8;
+  --color-brand-300: #9db4d4;
+  --color-brand-400: #698cbb;
+  --color-brand-500: #476ea3;
+  --color-brand-600: #355688;
+  --color-brand-700: #2c466e;
+  --color-brand-800: #283c5c;
+  --color-brand-900: #1e2c44;
+  --color-brand-950: #141d2e;
+
+  /* Warm cream surfaces */
+  --color-cream-50: #fbf8f3;
+  --color-cream-100: #f6f0e5;
+  --color-cream-200: #ece1cd;
+
+  /* Caramel accent */
+  --color-caramel-50: #fdf6ec;
+  --color-caramel-100: #f9e8cd;
+  --color-caramel-200: #f2d09b;
+  --color-caramel-300: #eab260;
+  --color-caramel-400: #e29a38;
+  --color-caramel-500: #d97f1e;
+  --color-caramel-600: #bc6317;
+  --color-caramel-700: #9c4a16;
+
+  /* WhatsApp green, reserved for order actions */
+  --color-wa-100: #d9fbe5;
+  --color-wa-500: #25d366;
+  --color-wa-600: #1cab53;
+  --color-wa-700: #128c46;
+
+  --animate-fade-in: fade-in 0.25s ease-out both;
+  --animate-fade-up: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-scale-in: scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-sheet-up: sheet-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-slide-in-right: slide-in-right 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes sheet-up {
+    from { transform: translateY(100%); }
+    to { transform: none; }
+  }
+  @keyframes slide-in-right {
+    from { transform: translateX(100%); }
+    to { transform: none; }
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-cream-50);
+  color: var(--color-brand-950);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
 @utility scrollbar-hide {
