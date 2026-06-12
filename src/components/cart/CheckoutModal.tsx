@@ -1,18 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { X, MessageCircle, Loader2 } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
-import type { OrderPayload } from "@/lib/types";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
+import type { OrderPayload, WhatsappContact } from "@/lib/types";
 
 type Props = {
+  contacts: WhatsappContact[];
   onClose: () => void;
   onSuccess: () => void;
 };
 
-export default function CheckoutModal({ onClose, onSuccess }: Props) {
+export default function CheckoutModal({ contacts, onClose, onSuccess }: Props) {
   const { items, total, clearCart } = useCartStore();
   const [name, setName] = useState("");
+  const [selectedNumber, setSelectedNumber] = useState(contacts[0]?.number ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -26,6 +29,7 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
       phone: "",
       items,
       total: total(),
+      whatsappNumber: selectedNumber,
     };
 
     try {
@@ -53,65 +57,100 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-60 flex items-end sm:items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 z-10">
+    <div className="fixed inset-0 z-60 flex animate-fade-in items-end justify-center sm:items-center sm:p-4">
+      <div className="absolute inset-0 bg-brand-950/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-md animate-sheet-up rounded-t-3xl bg-white p-6 shadow-2xl sm:animate-scale-in sm:rounded-3xl">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+          className="absolute right-4 top-4 rounded-full bg-cream-100 p-2 text-brand-950/60 transition-colors hover:bg-cream-200 hover:text-brand-950"
+          aria-label="Cerrar"
         >
-          <X size={18} />
+          <X size={16} />
         </button>
 
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center">
-            <MessageCircle size={24} className="text-amber-600" />
+        <div className="mb-5 flex items-center gap-3.5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-wa-100 text-wa-600">
+            <WhatsAppIcon className="h-6 w-6" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-gray-800">Confirmar pedido</h3>
-            <p className="text-gray-500 text-sm">Se abrirá WhatsApp con tu pedido listo</p>
+            <h3 className="font-display text-xl text-brand-950">Confirmar pedido</h3>
+            <p className="text-sm text-brand-950/50">
+              Se abrirá WhatsApp con el detalle de tu pedido
+            </p>
           </div>
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-3 mb-4 space-y-1">
+        <div className="mb-5 max-h-48 space-y-1.5 overflow-y-auto rounded-2xl bg-cream-50 p-4 ring-1 ring-brand-950/5">
           {items.map(({ product, quantity }) => (
-            <div key={product.id} className="flex justify-between text-sm">
-              <span className="text-gray-700">
-                {quantity}x {product.name}
+            <div key={product.id} className="flex justify-between gap-3 text-sm">
+              <span className="text-brand-950/75">
+                {quantity}× {product.name}
               </span>
-              <span className="font-medium text-gray-800">${(product.price * quantity).toLocaleString("es-AR")}</span>
+              <span className="shrink-0 font-medium text-brand-950">
+                ${(product.price * quantity).toLocaleString("es-AR")}
+              </span>
             </div>
           ))}
-          <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between font-bold">
-            <span className="text-gray-800">Total</span>
-            <span className="text-amber-600">${total().toLocaleString("es-AR")}</span>
+          <div className="mt-2 flex justify-between border-t border-brand-950/10 pt-2 font-bold">
+            <span className="text-brand-950">Total</span>
+            <span className="text-brand-900">${total().toLocaleString("es-AR")}</span>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tu nombre</label>
+            <label className="mb-1.5 block text-sm font-medium text-brand-950">Tu nombre</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Juan García"
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="h-12 w-full rounded-xl bg-white px-4 text-sm text-brand-950 ring-1 ring-brand-950/10 placeholder:text-brand-950/35 focus:outline-none focus:ring-2 focus:ring-wa-500"
             />
           </div>
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {contacts.length > 1 && (
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-brand-950">
+                ¿A quién le enviás el pedido?
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {contacts.map((contact) => {
+                  const active = selectedNumber === contact.number;
+                  return (
+                    <button
+                      type="button"
+                      key={contact.number}
+                      onClick={() => setSelectedNumber(contact.number)}
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+                        active
+                          ? "bg-wa-100 text-wa-700 ring-2 ring-wa-500"
+                          : "bg-white text-brand-950/70 ring-1 ring-brand-950/10 hover:ring-brand-400/60"
+                      }`}
+                    >
+                      <WhatsAppIcon
+                        className={`h-4 w-4 shrink-0 ${active ? "text-wa-600" : "text-brand-950/30"}`}
+                      />
+                      <span className="truncate">{contact.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {error && <p className="text-sm text-red-500">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-wa-600 py-3.5 text-sm font-semibold text-white shadow-lg shadow-wa-600/25 transition-all hover:bg-wa-700 active:scale-[0.98] disabled:opacity-60"
           >
             {loading ? (
               <Loader2 size={18} className="animate-spin" />
             ) : (
-              <MessageCircle size={18} />
+              <WhatsAppIcon className="h-5 w-5" />
             )}
             Enviar pedido por WhatsApp
           </button>

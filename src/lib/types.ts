@@ -39,9 +39,15 @@ export type CartItem = {
   quantity: number;
 };
 
+export type WhatsappContact = {
+  name: string;
+  number: string;
+};
+
 export type OrderPayload = {
   customerName: string;
   phone: string;
   items: CartItem[];
   total: number;
+  whatsappNumber?: string;
 };

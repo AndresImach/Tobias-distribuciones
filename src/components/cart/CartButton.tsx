@@ -1,6 +1,6 @@
 "use client";
 
-import { ShoppingCart } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 
 export default function CartButton() {
@@ -10,12 +10,12 @@ export default function CartButton() {
   return (
     <button
       onClick={openCart}
-      className="relative p-2 hover:bg-amber-50 text-gray-700 rounded-xl transition-colors"
-      aria-label="Ver carrito"
+      className="relative flex h-10 w-10 items-center justify-center rounded-full bg-brand-900 text-cream-50 shadow-sm transition-all hover:bg-brand-700 active:scale-95"
+      aria-label="Ver pedido"
     >
-      <ShoppingCart size={24} />
+      <ShoppingBag size={18} />
       {count > 0 && (
-        <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+        <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-caramel-500 px-1 text-[11px] font-bold text-white ring-2 ring-white">
           {count > 99 ? "99+" : count}
         </span>
       )}
