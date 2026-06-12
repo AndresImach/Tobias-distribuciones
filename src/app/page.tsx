@@ -6,6 +6,7 @@ import WhatsAppFab from "@/components/WhatsAppFab";
 import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import Image from "next/image";
 import { MapPin, Clock } from "lucide-react";
+import { getWhatsappContacts } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +17,8 @@ export default async function HomePage() {
   });
 
   const productCount = categories.reduce((sum, c) => sum + (c._count?.products ?? 0), 0);
-  const whatsappNumber = process.env.WHATSAPP_NUMBER;
-  const waHref = whatsappNumber ? `https://wa.me/${whatsappNumber}` : null;
+  const mainContact = getWhatsappContacts()[0];
+  const waHref = mainContact ? `https://wa.me/${mainContact.number}` : null;
 
   return (
     <div className="min-h-screen flex flex-col">

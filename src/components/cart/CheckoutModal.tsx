@@ -4,16 +4,18 @@ import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
-import type { OrderPayload } from "@/lib/types";
+import type { OrderPayload, WhatsappContact } from "@/lib/types";
 
 type Props = {
+  contacts: WhatsappContact[];
   onClose: () => void;
   onSuccess: () => void;
 };
 
-export default function CheckoutModal({ onClose, onSuccess }: Props) {
+export default function CheckoutModal({ contacts, onClose, onSuccess }: Props) {
   const { items, total, clearCart } = useCartStore();
   const [name, setName] = useState("");
+  const [selectedNumber, setSelectedNumber] = useState(contacts[0]?.number ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -27,6 +29,7 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
       phone: "",
       items,
       total: total(),
+      whatsappNumber: selectedNumber,
     };
 
     try {
@@ -106,6 +109,36 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
               className="h-12 w-full rounded-xl bg-white px-4 text-sm text-brand-950 ring-1 ring-brand-950/10 placeholder:text-brand-950/35 focus:outline-none focus:ring-2 focus:ring-wa-500"
             />
           </div>
+
+          {contacts.length > 1 && (
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-brand-950">
+                ¿A quién le enviás el pedido?
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {contacts.map((contact) => {
+                  const active = selectedNumber === contact.number;
+                  return (
+                    <button
+                      type="button"
+                      key={contact.number}
+                      onClick={() => setSelectedNumber(contact.number)}
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+                        active
+                          ? "bg-wa-100 text-wa-700 ring-2 ring-wa-500"
+                          : "bg-white text-brand-950/70 ring-1 ring-brand-950/10 hover:ring-brand-400/60"
+                      }`}
+                    >
+                      <WhatsAppIcon
+                        className={`h-4 w-4 shrink-0 ${active ? "text-wa-600" : "text-brand-950/30"}`}
+                      />
+                      <span className="truncate">{contact.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {error && <p className="text-sm text-red-500">{error}</p>}
 

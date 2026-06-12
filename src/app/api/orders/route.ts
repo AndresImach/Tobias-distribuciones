@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getWhatsappContacts } from "@/lib/whatsapp";
 import type { OrderPayload } from "@/lib/types";
 
 export async function POST(request: Request) {
   const body: OrderPayload = await request.json();
-  const { customerName, phone, items, total } = body;
+  const { customerName, phone, items, total, whatsappNumber } = body;
 
   if (!customerName || !items?.length) {
     return NextResponse.json({ error: "Datos incompletos" }, { status: 400 });
@@ -19,7 +20,8 @@ export async function POST(request: Request) {
     },
   });
 
-  const whatsappNumber = process.env.WHATSAPP_NUMBER ?? "";
+  const contacts = getWhatsappContacts();
+  const contact = contacts.find((c) => c.number === whatsappNumber) ?? contacts[0];
   const itemLines = items
     .map((i) => `• ${i.quantity}x ${i.product.name} - $${(i.product.price * i.quantity).toLocaleString("es-AR")}`)
     .join("\n");
@@ -28,7 +30,7 @@ export async function POST(request: Request) {
     `¡Hola! Soy ${customerName} y quiero hacer un pedido:\n\n${itemLines}\n\n*Total: $${total.toLocaleString("es-AR")}*\n\nNúmero de pedido: #${order.id}`
   );
 
-  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
+  const whatsappUrl = `https://wa.me/${contact?.number ?? ""}?text=${message}`;
 
   return NextResponse.json({ order, whatsappUrl });
 }

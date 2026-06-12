@@ -6,8 +6,13 @@ import { useCartStore } from "@/store/cartStore";
 import { useState } from "react";
 import CheckoutModal from "./CheckoutModal";
 import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
+import type { WhatsappContact } from "@/lib/types";
 
-export default function CartDrawer() {
+type Props = {
+  whatsappContacts: WhatsappContact[];
+};
+
+export default function CartDrawer({ whatsappContacts }: Props) {
   const { items, isOpen, closeCart, removeItem, updateQuantity, total, itemCount } = useCartStore();
   const [showCheckout, setShowCheckout] = useState(false);
 
@@ -152,6 +157,7 @@ export default function CartDrawer() {
 
       {showCheckout && (
         <CheckoutModal
+          contacts={whatsappContacts}
           onClose={() => setShowCheckout(false)}
           onSuccess={() => { setShowCheckout(false); closeCart(); }}
         />
