@@ -84,7 +84,7 @@ export default function CatalogClient({ initialCategories, waHref }: Props) {
   return (
     <div className="lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start lg:gap-8 lg:pt-8">
       {/* Desktop sidebar */}
-      <aside className="sticky top-20 hidden space-y-5 lg:block">
+      <aside className="hidden space-y-5 lg:block">
         <CategorySidebar
           categories={initialCategories}
           selected={selectedCategory}
