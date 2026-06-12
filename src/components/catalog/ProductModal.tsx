@@ -75,7 +75,7 @@ export default function ProductModal({ product, onClose }: Props) {
             <p className="text-sm leading-relaxed text-brand-950/55">{product.description}</p>
           )}
 
-          <div className="mt-1 flex items-center justify-between gap-3 border-t border-brand-950/5 pt-4">
+          <div className="mt-1 flex flex-wrap items-center justify-between gap-3 border-t border-brand-950/5 pt-4">
             {product.price ? (
               <span className="text-2xl font-bold tracking-tight text-brand-900">
                 ${product.price.toLocaleString("es-AR")}
@@ -87,12 +87,12 @@ export default function ProductModal({ product, onClose }: Props) {
             {quantity === 0 ? (
               <button
                 onClick={() => addItem(product)}
-                className="flex items-center gap-2 rounded-full bg-brand-900 px-5 py-3 text-sm font-semibold text-cream-50 shadow-md shadow-brand-900/20 transition-all hover:bg-brand-700 active:scale-95"
+                className="ml-auto flex items-center gap-2 rounded-full bg-brand-900 px-5 py-3 text-sm font-semibold text-cream-50 shadow-md shadow-brand-900/20 transition-all hover:bg-brand-700 active:scale-95"
               >
                 <ShoppingBag size={16} /> Agregar al pedido
               </button>
             ) : (
-              <div className="flex items-center rounded-full bg-brand-900 text-cream-50 shadow-md shadow-brand-900/20">
+              <div className="ml-auto flex items-center rounded-full bg-brand-900 text-cream-50 shadow-md shadow-brand-900/20">
                 <button
                   onClick={() => updateQuantity(product.id, quantity - 1)}
                   className="flex h-11 w-10 items-center justify-center rounded-full transition-colors hover:bg-white/10"

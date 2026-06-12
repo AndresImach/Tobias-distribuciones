@@ -51,7 +51,7 @@ export default function ProductCard({ product, onOpenModal }: Props) {
         {product.description && (
           <p className="mt-1 line-clamp-2 text-xs text-brand-950/45">{product.description}</p>
         )}
-        <div className="mt-auto flex items-center justify-between gap-2 pt-3">
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
           {product.price ? (
             <span className="text-lg font-bold tracking-tight text-brand-900">
               ${product.price.toLocaleString("es-AR")}
@@ -63,14 +63,14 @@ export default function ProductCard({ product, onOpenModal }: Props) {
           {quantity === 0 ? (
             <button
               onClick={(e) => { e.stopPropagation(); addItem(product); }}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-900 text-cream-50 shadow-sm transition-all hover:bg-brand-700 active:scale-90"
+              className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-900 text-cream-50 shadow-sm transition-all hover:bg-brand-700 active:scale-90"
               aria-label={`Agregar ${product.name} al pedido`}
             >
               <Plus size={16} strokeWidth={2.5} />
             </button>
           ) : (
             <div
-              className="flex shrink-0 items-center rounded-full bg-brand-900 text-cream-50 shadow-sm"
+              className="ml-auto flex shrink-0 items-center rounded-full bg-brand-900 text-cream-50 shadow-sm"
               onClick={(e) => e.stopPropagation()}
             >
               <button
