@@ -110,7 +110,7 @@ export default function CatalogClient({ initialCategories, waHref }: Props) {
 
       <div>
         {/* Search: sticky on mobile, static in column on desktop */}
-        <div className="sticky top-16 z-20 -mx-4 bg-cream-50/95 px-4 pb-3 pt-4 backdrop-blur-md lg:static lg:m-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+        <div className="sticky top-20 z-20 -mx-4 bg-cream-50/95 px-4 pb-3 pt-4 backdrop-blur-md lg:static lg:m-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
           <SearchBar value={search} onChange={setSearch} />
         </div>
 

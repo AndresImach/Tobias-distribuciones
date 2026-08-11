@@ -24,13 +24,13 @@ export default async function HomePage() {
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-30 border-b border-brand-950/5 bg-white/85 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+        <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-4">
           <Image
             src="/logo.png"
             alt="Tobias Distribuciones"
-            width={110}
-            height={38}
-            className="h-9 w-auto object-contain"
+            width={1209}
+            height={404}
+            className="h-14 w-auto object-contain sm:h-16"
             priority
           />
           <div className="flex items-center gap-3">
