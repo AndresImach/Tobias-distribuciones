@@ -4,7 +4,7 @@ import CartButton from "@/components/cart/CartButton";
 import MobileCartBar from "@/components/cart/MobileCartBar";
 import WhatsAppFab from "@/components/WhatsAppFab";
 import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
-import Image from "next/image";
+import HeaderLogo from "@/components/HeaderLogo";
 import { MapPin, Clock } from "lucide-react";
 import { getWhatsappContacts } from "@/lib/whatsapp";
 
@@ -25,14 +25,7 @@ export default async function HomePage() {
       {/* Header */}
       <header className="sticky top-0 z-30 border-b border-brand-950/5 bg-white/85 backdrop-blur-md">
         <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-4">
-          <Image
-            src="/logo.png"
-            alt="Tobias Distribuciones"
-            width={1209}
-            height={404}
-            className="h-14 w-auto object-contain sm:h-16"
-            priority
-          />
+          <HeaderLogo />
           <div className="flex items-center gap-3">
             {waHref && (
               <a
@@ -68,7 +61,7 @@ export default async function HomePage() {
           </p>
           <div className="mt-7 flex flex-wrap gap-2">
             <span className="flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-medium text-cream-50/90 ring-1 ring-white/10">
-              <Clock size={13} className="text-caramel-300" /> Lun–Sáb 8:00–18:00
+              <Clock size={13} className="text-caramel-300" /> Lun–Vie 9–13 y 17–21 hs · Sáb 9–13 hs
             </span>
             <span className="flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-medium text-cream-50/90 ring-1 ring-white/10">
               <MapPin size={13} className="text-caramel-300" /> Tucumán, Argentina
@@ -152,7 +145,11 @@ export default async function HomePage() {
               <ul className="mt-4 space-y-3 text-sm text-cream-50/80">
                 <li className="flex items-start gap-2.5">
                   <Clock size={16} className="mt-0.5 shrink-0 text-cream-50/40" />
-                  Lunes a Sábado · 8:00–18:00 hs
+                  <span>
+                    Lunes a Viernes · 9 a 13 hs y 17 a 21 hs
+                    <br />
+                    Sábados · 9 a 13 hs
+                  </span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <MapPin size={16} className="mt-0.5 shrink-0 text-cream-50/40" />
