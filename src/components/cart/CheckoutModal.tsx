@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, CheckCircle2 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import type { OrderPayload, WhatsappContact } from "@/lib/types";
@@ -13,11 +13,12 @@ type Props = {
 };
 
 export default function CheckoutModal({ contacts, onClose, onSuccess }: Props) {
-  const { items, total, clearCart } = useCartStore();
+  const { items, total, clearCart, pedidoToken } = useCartStore();
   const [name, setName] = useState("");
   const [selectedNumber, setSelectedNumber] = useState(contacts[0]?.number ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [entregado, setEntregado] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +31,7 @@ export default function CheckoutModal({ contacts, onClose, onSuccess }: Props) {
       items,
       total: total(),
       whatsappNumber: selectedNumber,
+      pedidoToken: pedidoToken ?? undefined,
     };
 
     try {
@@ -47,14 +49,43 @@ export default function CheckoutModal({ contacts, onClose, onSuccess }: Props) {
       }
 
       clearCart();
-      onSuccess();
-      window.open(data.whatsappUrl, "_blank");
+      if (data.entregadoPorWhatsapp) {
+        // El bot ya mandó el desglose directo por WhatsApp: mostramos la confirmación acá
+        // en vez de abrir wa.me, que quedaría redundante con el mensaje que ya llegó.
+        setEntregado(true);
+      } else {
+        onSuccess();
+        window.open(data.whatsappUrl, "_blank");
+      }
     } catch {
       setError("Error de conexión. Intentá de nuevo.");
     } finally {
       setLoading(false);
     }
   };
+
+  if (entregado) {
+    return (
+      <div className="fixed inset-0 z-60 flex animate-fade-in items-end justify-center sm:items-center sm:p-4">
+        <div className="absolute inset-0 bg-brand-950/60 backdrop-blur-sm" onClick={onSuccess} />
+        <div className="relative z-10 w-full max-w-md animate-sheet-up rounded-t-3xl bg-white p-6 text-center shadow-2xl sm:animate-scale-in sm:rounded-3xl">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-wa-100 text-wa-600">
+            <CheckCircle2 size={28} />
+          </div>
+          <h3 className="mt-4 font-display text-xl text-brand-950">¡Pedido enviado!</h3>
+          <p className="mt-2 text-sm text-brand-950/60">
+            Te mandamos el resumen de tu pedido por WhatsApp. Revisá la conversación ahí.
+          </p>
+          <button
+            onClick={onSuccess}
+            className="mt-6 w-full rounded-full bg-brand-900 py-3.5 text-sm font-semibold text-cream-50 transition-colors hover:bg-brand-700"
+          >
+            Listo
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-60 flex animate-fade-in items-end justify-center sm:items-center sm:p-4">

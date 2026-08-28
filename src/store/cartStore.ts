@@ -5,12 +5,16 @@ import type { CartItem, Product } from "@/lib/types";
 type CartStore = {
   items: CartItem[];
   isOpen: boolean;
+  // Token del botón CTA de WhatsApp de ChatNoa (query param ?pedido=), capturado por
+  // PedidoTokenSync. Ata la confirmación del pedido a esa conversación de WhatsApp.
+  pedidoToken: string | null;
   addItem: (product: Product) => void;
   removeItem: (productId: number) => void;
   updateQuantity: (productId: number, quantity: number) => void;
   clearCart: () => void;
   openCart: () => void;
   closeCart: () => void;
+  setPedidoToken: (token: string) => void;
   total: () => number;
   itemCount: () => number;
 };
@@ -20,6 +24,9 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       items: [],
       isOpen: false,
+      pedidoToken: null,
+
+      setPedidoToken: (token) => set({ pedidoToken: token }),
 
       addItem: (product) => {
         const items = get().items;

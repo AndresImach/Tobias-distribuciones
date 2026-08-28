@@ -50,4 +50,7 @@ export type OrderPayload = {
   items: CartItem[];
   total: number;
   whatsappNumber?: string;
+  // Token del botón CTA de WhatsApp de ChatNoa: si vino de ahí, el pedido se confirma
+  // directo por Cloud API en vez de abrir wa.me. Ver PedidoTokenSync.tsx.
+  pedidoToken?: string;
 };
