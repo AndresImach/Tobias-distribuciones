@@ -1,45 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getWhatsappContacts } from "@/lib/whatsapp";
-import type { CartItem, OrderPayload } from "@/lib/types";
-
-// Server-to-server con el bot de ChatNoa: si el pedido vino del botón CTA de WhatsApp
-// (pedidoToken presente), le avisamos para que mande el desglose directo por Cloud API
-// en vez de depender de que el cliente abra wa.me a mano. Si falla o no está
-// configurado, no rompe el pedido — sigue el flujo de wa.me de siempre.
-async function notificarPedidoConfirmado({
-  pedidoToken,
-  orderId,
-  items,
-  total,
-}: {
-  pedidoToken: string;
-  orderId: number;
-  items: CartItem[];
-  total: number;
-}): Promise<boolean> {
-  const base = process.env.CHATNOA_BOT_URL?.replace(/\/$/, "");
-  const secret = process.env.CHATNOA_PEDIDO_WEBHOOK_TOKEN;
-  if (!base || !secret) return false;
-  try {
-    const respuesta = await fetch(`${base}/api/pedido-confirmado`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
-      body: JSON.stringify({
-        token: pedidoToken,
-        orderId,
-        total,
-        items: items.map((i) => ({ nombre: i.product.name, cantidad: i.quantity, precio: i.product.price })),
-      }),
-      signal: AbortSignal.timeout(4500),
-    });
-    if (!respuesta.ok) return false;
-    const data = await respuesta.json().catch(() => ({}));
-    return data?.enviado === true;
-  } catch {
-    return false;
-  }
-}
+import { notificarPedidoConfirmado } from "@/lib/botPedidos";
+import type { OrderPayload } from "@/lib/types";
 
 export async function POST(request: Request) {
   const body: OrderPayload = await request.json();

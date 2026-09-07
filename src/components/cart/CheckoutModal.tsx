@@ -13,7 +13,7 @@ type Props = {
 };
 
 export default function CheckoutModal({ contacts, onClose, onSuccess }: Props) {
-  const { items, total, clearCart, pedidoToken } = useCartStore();
+  const { items, total, clearCart, activePedidoToken } = useCartStore();
   const [name, setName] = useState("");
   const [selectedNumber, setSelectedNumber] = useState(contacts[0]?.number ?? "");
   const [loading, setLoading] = useState(false);
@@ -31,7 +31,7 @@ export default function CheckoutModal({ contacts, onClose, onSuccess }: Props) {
       items,
       total: total(),
       whatsappNumber: selectedNumber,
-      pedidoToken: pedidoToken ?? undefined,
+      pedidoToken: activePedidoToken() ?? undefined,
     };
 
     try {

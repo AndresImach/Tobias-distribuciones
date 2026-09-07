@@ -49,3 +49,5 @@ Open [http://localhost:3000](http://localhost:3000) for the store, and [http://l
 | `NEXTAUTH_SECRET` | Random secret string |
 | `NEXTAUTH_URL` | App URL (e.g. `http://localhost:3000`) |
 | `WHATSAPP_NUMBER` | WhatsApp number without `+` (e.g. `5491112345678`) |
+| `BOT_BASE_URL` | Public URL of the WhatsApp bot deploy (ChatNoa) |
+| `TOBIAS_PEDIDO_WEBHOOK_TOKEN` | Shared secret for the bot's `/api/pedido-confirmado` webhook — must match the bot's value exactly |
