@@ -33,10 +33,15 @@ async function notificarPedidoConfirmado({
       }),
       signal: AbortSignal.timeout(4500),
     });
-    if (!respuesta.ok) return false;
+    if (!respuesta.ok) {
+      const cuerpo = await respuesta.text().catch(() => "");
+      console.error("notificarPedidoConfirmado: respuesta no OK", respuesta.status, cuerpo.slice(0, 300));
+      return false;
+    }
     const data = await respuesta.json().catch(() => ({}));
     return data?.enviado === true;
-  } catch {
+  } catch (error) {
+    console.error("notificarPedidoConfirmado: excepción", error instanceof Error ? error.message : String(error));
     return false;
   }
 }
