@@ -66,6 +66,16 @@ model Order {
   createdAt    DateTime @default(now())
 }
 
+// Carrito en progreso atado al número de WhatsApp del pedidoToken (no al token crudo:
+// el token rota cada vez que el bot manda el link, pero el número es estable). Así el
+// mismo cliente ve su carrito armado sin importar navegador o dispositivo, mientras use
+// un link con el mismo número codificado.
+model CartSession {
+  numero    String   @id
+  items     String
+  updatedAt DateTime @updatedAt
+}
+
 model AdminUser {
   id        Int      @id @default(autoincrement())
   email     String   @unique

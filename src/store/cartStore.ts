@@ -2,11 +2,32 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CartItem, Product } from "@/lib/types";
 
+// Debounce del guardado en el server: evita un PUT por cada click de +/- cuando el
+// cliente ajusta cantidades rápido. localStorage (vía persist) sigue guardando al
+// instante en cada cambio; esto es sólo la copia server-side atada al pedidoToken.
+const DEBOUNCE_MS = 500;
+let guardadoPendiente: ReturnType<typeof setTimeout> | null = null;
+
+function guardarEnServidorDebounced(token: string, items: CartItem[]) {
+  if (guardadoPendiente) clearTimeout(guardadoPendiente);
+  guardadoPendiente = setTimeout(() => {
+    fetch("/api/cart", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, items }),
+    }).catch(() => {
+      // Si falla, localStorage sigue teniendo el carrito en este navegador; no hay
+      // nada más que hacer client-side, el próximo cambio reintenta el guardado.
+    });
+  }, DEBOUNCE_MS);
+}
+
 type CartStore = {
   items: CartItem[];
   isOpen: boolean;
   // Token del botón CTA de WhatsApp de ChatNoa (query param ?pedido=), capturado por
-  // PedidoTokenSync. Ata la confirmación del pedido a esa conversación de WhatsApp.
+  // PedidoTokenSync. Ata la confirmación del pedido a esa conversación de WhatsApp, y
+  // ahora también el guardado del carrito en progreso en el server.
   pedidoToken: string | null;
   addItem: (product: Product) => void;
   removeItem: (productId: number) => void;
@@ -15,9 +36,16 @@ type CartStore = {
   openCart: () => void;
   closeCart: () => void;
   setPedidoToken: (token: string) => void;
+  hidratarDesdeServidor: (items: CartItem[]) => void;
   total: () => number;
   itemCount: () => number;
 };
+
+function persistirYGuardar(get: () => CartStore, items: CartItem[]) {
+  const token = get().pedidoToken;
+  if (token) guardarEnServidorDebounced(token, items);
+  return items;
+}
 
 export const useCartStore = create<CartStore>()(
   persist(
@@ -28,24 +56,26 @@ export const useCartStore = create<CartStore>()(
 
       setPedidoToken: (token) => set({ pedidoToken: token }),
 
+      // Reemplaza el carrito local por el que vino del server para este pedidoToken.
+      // No dispara un guardado: es una lectura, no un cambio del cliente.
+      hidratarDesdeServidor: (items) => set({ items }),
+
       addItem: (product) => {
         const items = get().items;
         const existing = items.find((i) => i.product.id === product.id);
-        if (existing) {
-          set({
-            items: items.map((i) =>
+        const nuevos = existing
+          ? items.map((i) =>
               i.product.id === product.id
                 ? { ...i, quantity: i.quantity + 1 }
                 : i
-            ),
-          });
-        } else {
-          set({ items: [...items, { product, quantity: 1 }] });
-        }
+            )
+          : [...items, { product, quantity: 1 }];
+        set({ items: persistirYGuardar(get, nuevos) });
       },
 
       removeItem: (productId) => {
-        set({ items: get().items.filter((i) => i.product.id !== productId) });
+        const nuevos = get().items.filter((i) => i.product.id !== productId);
+        set({ items: persistirYGuardar(get, nuevos) });
       },
 
       updateQuantity: (productId, quantity) => {
@@ -53,14 +83,13 @@ export const useCartStore = create<CartStore>()(
           get().removeItem(productId);
           return;
         }
-        set({
-          items: get().items.map((i) =>
-            i.product.id === productId ? { ...i, quantity } : i
-          ),
-        });
+        const nuevos = get().items.map((i) =>
+          i.product.id === productId ? { ...i, quantity } : i
+        );
+        set({ items: persistirYGuardar(get, nuevos) });
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: persistirYGuardar(get, []) }),
       openCart: () => set({ isOpen: true }),
       closeCart: () => set({ isOpen: false }),
 
