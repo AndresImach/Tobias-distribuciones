@@ -34,8 +34,9 @@ async function notificarPedidoConfirmado({
       signal: AbortSignal.timeout(4500),
     });
     if (!respuesta.ok) {
-      const cuerpo = await respuesta.text().catch(() => "");
-      console.error("notificarPedidoConfirmado: respuesta no OK", respuesta.status, cuerpo.slice(0, 300));
+      // Sin este log, un fallo acá (token vencido, protección de deployment, timeout)
+      // es indistinguible de "no estaba configurado" — ya nos pasó una vez.
+      console.error("notificarPedidoConfirmado: respuesta no OK", respuesta.status);
       return false;
     }
     const data = await respuesta.json().catch(() => ({}));
@@ -86,8 +87,11 @@ export async function POST(request: Request) {
   );
 
   const whatsappUrl = `https://wa.me/${contact?.number ?? ""}?text=${message}`;
+  // Sin texto prellenado a propósito: cuando el bot ya mandó el desglose, este link es
+  // sólo para volver a leerlo en el chat, no para mandar otro mensaje de pedido.
+  const volverWhatsappUrl = numeroBot ? `https://wa.me/${numeroBot}` : null;
 
-  return NextResponse.json({ order, whatsappUrl, entregadoPorWhatsapp });
+  return NextResponse.json({ order, whatsappUrl, volverWhatsappUrl, entregadoPorWhatsapp });
 }
 
 export async function GET() {

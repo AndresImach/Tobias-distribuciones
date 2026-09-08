@@ -19,6 +19,7 @@ export default function CheckoutModal({ contacts, onClose, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [entregado, setEntregado] = useState(false);
+  const [volverUrl, setVolverUrl] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +53,7 @@ export default function CheckoutModal({ contacts, onClose, onSuccess }: Props) {
       if (data.entregadoPorWhatsapp) {
         // El bot ya mandó el desglose directo por WhatsApp: mostramos la confirmación acá
         // en vez de abrir wa.me, que quedaría redundante con el mensaje que ya llegó.
+        setVolverUrl(data.volverWhatsappUrl ?? null);
         setEntregado(true);
       } else {
         onSuccess();
@@ -76,12 +78,33 @@ export default function CheckoutModal({ contacts, onClose, onSuccess }: Props) {
           <p className="mt-2 text-sm text-brand-950/60">
             Te mandamos el resumen de tu pedido por WhatsApp. Revisá la conversación ahí.
           </p>
-          <button
-            onClick={onSuccess}
-            className="mt-6 w-full rounded-full bg-brand-900 py-3.5 text-sm font-semibold text-cream-50 transition-colors hover:bg-brand-700"
-          >
-            Listo
-          </button>
+          {volverUrl ? (
+            <>
+              <a
+                href={volverUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={onSuccess}
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-wa-600 py-3.5 text-sm font-semibold text-white shadow-lg shadow-wa-600/25 transition-all hover:bg-wa-700 active:scale-[0.98]"
+              >
+                <WhatsAppIcon className="h-5 w-5" />
+                Ver mi pedido en WhatsApp
+              </a>
+              <button
+                onClick={onSuccess}
+                className="mt-2.5 w-full rounded-full py-2.5 text-sm font-medium text-brand-950/50 transition-colors hover:text-brand-950"
+              >
+                Listo
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={onSuccess}
+              className="mt-6 w-full rounded-full bg-brand-900 py-3.5 text-sm font-semibold text-cream-50 transition-colors hover:bg-brand-700"
+            >
+              Listo
+            </button>
+          )}
         </div>
       </div>
     );
