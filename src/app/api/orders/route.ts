@@ -62,8 +62,16 @@ export async function POST(request: Request) {
     ? await notificarPedidoConfirmado({ pedidoToken, orderId: order.id, items, total })
     : false;
 
+  // Con pedidoToken el pedido ya vino de un chat puntual con el número del bot: si el
+  // webhook automático no se entrega, wa.me tiene que volver a ESE número, no a
+  // cualquiera de los contactos generales (esos son para el flujo sin sesión, cuando
+  // no sabemos con quién venía hablando el cliente).
+  const numeroBot = String(process.env.TOBIAS_BOT_WHATSAPP_NUMBER || "").trim();
   const contacts = getWhatsappContacts();
-  const contact = contacts.find((c) => c.number === whatsappNumber) ?? contacts[0];
+  const contact =
+    pedidoToken && numeroBot
+      ? { name: "Tobías", number: numeroBot }
+      : contacts.find((c) => c.number === whatsappNumber) ?? contacts[0];
   const itemLines = items
     .map((i) => `• ${i.quantity}x ${i.product.name} - $${(i.product.price * i.quantity).toLocaleString("es-AR")}`)
     .join("\n");
