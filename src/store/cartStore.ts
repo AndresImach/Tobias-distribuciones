@@ -7,19 +7,47 @@ import type { CartItem, Product } from "@/lib/types";
 // instante en cada cambio; esto es sólo la copia server-side atada al pedidoToken.
 const DEBOUNCE_MS = 500;
 let guardadoPendiente: ReturnType<typeof setTimeout> | null = null;
+// Último guardado sin confirmar todavía: si la pestaña se va a segundo plano o se
+// cierra antes de que venza el debounce, lo mandamos de una para no perderlo — es
+// exactamente lo que pasa cuando alguien agrega algo y al toque abre otro navegador
+// para probar (el caso que motivó esto).
+let ultimoPendiente: { token: string; items: CartItem[] } | null = null;
+
+function enviarCarrito(token: string, items: CartItem[], keepalive: boolean) {
+  fetch("/api/cart", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, items }),
+    keepalive,
+  }).catch(() => {
+    // Si falla, localStorage sigue teniendo el carrito en este navegador; no hay
+    // nada más que hacer client-side, el próximo cambio reintenta el guardado.
+  });
+}
 
 function guardarEnServidorDebounced(token: string, items: CartItem[]) {
+  ultimoPendiente = { token, items };
   if (guardadoPendiente) clearTimeout(guardadoPendiente);
   guardadoPendiente = setTimeout(() => {
-    fetch("/api/cart", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, items }),
-    }).catch(() => {
-      // Si falla, localStorage sigue teniendo el carrito en este navegador; no hay
-      // nada más que hacer client-side, el próximo cambio reintenta el guardado.
-    });
+    ultimoPendiente = null;
+    enviarCarrito(token, items, false);
   }, DEBOUNCE_MS);
+}
+
+function flushGuardadoPendiente() {
+  if (!ultimoPendiente) return;
+  if (guardadoPendiente) clearTimeout(guardadoPendiente);
+  const { token, items } = ultimoPendiente;
+  ultimoPendiente = null;
+  // keepalive: la petición sigue en curso aunque la pestaña se descargue ya mismo.
+  enviarCarrito(token, items, true);
+}
+
+if (typeof window !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flushGuardadoPendiente();
+  });
+  window.addEventListener("pagehide", flushGuardadoPendiente);
 }
 
 type CartStore = {
