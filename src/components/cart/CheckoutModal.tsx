@@ -106,7 +106,9 @@ export default function CheckoutModal({ contacts, onClose, onSuccess }: Props) {
           <div>
             <h3 className="font-display text-xl text-brand-950">Confirmar pedido</h3>
             <p className="text-sm text-brand-950/50">
-              Se abrirá WhatsApp con el detalle de tu pedido
+              {pedidoToken
+                ? "Te confirmamos el pedido en el mismo chat de WhatsApp"
+                : "Se abrirá WhatsApp con el detalle de tu pedido"}
             </p>
           </div>
         </div>
@@ -141,7 +143,10 @@ export default function CheckoutModal({ contacts, onClose, onSuccess }: Props) {
             />
           </div>
 
-          {contacts.length > 1 && (
+          {/* Con pedidoToken el destino ya está fijado por la conversación de WhatsApp
+              de la que vino el link — elegir otro acá no tendría efecto (el bot le
+              contesta a ese chat, no al número que se toque) y sólo confundía. */}
+          {contacts.length > 1 && !pedidoToken && (
             <div>
               <label className="mb-1.5 block text-sm font-medium text-brand-950">
                 ¿A quién le enviás el pedido?
