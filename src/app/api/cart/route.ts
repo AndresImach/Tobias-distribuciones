@@ -9,9 +9,27 @@ import type { CartItem } from "@/lib/types";
 // viviendo sólo en localStorage, como hasta ahora.
 
 export async function GET(request: Request) {
-  const token = new URL(request.url).searchParams.get("token");
+  const params = new URL(request.url).searchParams;
+  const token = params.get("token");
   const sesion = verificarTokenPedido(token);
   if (!sesion) return NextResponse.json({ items: null });
+
+  // "No, modificar pedido" pide explícitamente reabrir UN pedido puntual (ya
+  // confirmado, y por lo tanto sin carrito en progreso: se borra al confirmar). Sólo
+  // se restaura si ese pedido es realmente del mismo número del token — si no, un id
+  // adivinado no trae el pedido de otro cliente.
+  const restaurarId = Number(params.get("restaurar"));
+  if (Number.isInteger(restaurarId) && restaurarId > 0) {
+    const pedido = await prisma.order.findUnique({ where: { id: restaurarId } });
+    if (pedido && pedido.phone === sesion.numero) {
+      try {
+        return NextResponse.json({ items: JSON.parse(pedido.items) });
+      } catch {
+        return NextResponse.json({ items: null });
+      }
+    }
+    return NextResponse.json({ items: null });
+  }
 
   const guardado = await prisma.cartSession.findUnique({ where: { numero: sesion.numero } });
   if (!guardado) return NextResponse.json({ items: null });

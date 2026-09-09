@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getWhatsappContacts } from "@/lib/whatsapp";
+import { verificarTokenPedido } from "@/lib/pedido-token";
 import type { CartItem, OrderPayload } from "@/lib/types";
 
 // Server-to-server con el bot de ChatNoa: si el pedido vino del botón CTA de WhatsApp
@@ -55,10 +56,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Datos incompletos" }, { status: 400 });
   }
 
+  // Con pedidoToken guardamos el número real de la conversación (no el que haya
+  // tipeado el cliente en el campo de teléfono, que hoy ni siquiera se pide): es lo
+  // que permite recuperar este pedido puntual más tarde si el cliente lo modifica.
+  const sesionPedido = pedidoToken ? verificarTokenPedido(pedidoToken) : null;
   const order = await prisma.order.create({
     data: {
       customerName,
-      phone,
+      phone: sesionPedido?.numero || phone,
       items: JSON.stringify(items),
       total,
     },

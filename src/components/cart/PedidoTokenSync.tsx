@@ -17,14 +17,23 @@ export default function PedidoTokenSync() {
   const hidratarDesdeServidor = useCartStore((state) => state.hidratarDesdeServidor);
 
   useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get("pedido");
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("pedido");
     if (!token) {
       setPedidoToken(null);
       return;
     }
     setPedidoToken(token);
 
-    fetch(`/api/cart?token=${encodeURIComponent(token)}`)
+    // "No, modificar pedido" manda ?restaurar=<id> junto al token: ese pedido ya está
+    // confirmado (y su carrito en progreso, borrado), así que se reabre desde el
+    // pedido guardado en vez de buscar un carrito activo que ya no existe.
+    const restaurar = params.get("restaurar");
+    const url = restaurar
+      ? `/api/cart?token=${encodeURIComponent(token)}&restaurar=${encodeURIComponent(restaurar)}`
+      : `/api/cart?token=${encodeURIComponent(token)}`;
+
+    fetch(url)
       .then((respuesta) => (respuesta.ok ? respuesta.json() : null))
       .then((data) => {
         if (data?.items) hidratarDesdeServidor(data.items);
