@@ -81,3 +81,13 @@ body {
     display: none;
   }
 }
+
+/* iOS Safari hace zoom automático al enfocar un input con font-size < 16px.
+   Forzamos 16px solo en mobile para evitarlo sin alterar el tamaño en desktop. */
+@media (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
