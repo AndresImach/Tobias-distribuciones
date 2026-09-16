@@ -64,6 +64,16 @@ model Order {
   total        Float
   status       String   @default("pending")
   createdAt    DateTime @default(now())
+
+  // Cómo quiere recibirlo el cliente. Lo completa el bot por WhatsApp después de que
+  // el pedido se confirma acá, así que son opcionales: entre que el pedido se crea y
+  // el cliente elige, existe sin ninguno de estos datos.
+  // deliveryMethod: "envio" | "retiro". Con "retiro" viaja pickupBranch; con "envio",
+  // shippingAddress. paymentMethod: "efectivo" | "mercadopago".
+  deliveryMethod  String?
+  pickupBranch    String?
+  shippingAddress String?
+  paymentMethod   String?
 }
 
 // Carrito en progreso atado al número de WhatsApp del pedidoToken (no al token crudo:
