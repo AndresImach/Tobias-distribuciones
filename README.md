@@ -49,3 +49,20 @@ Open [http://localhost:3000](http://localhost:3000) for the store, and [http://l
 | `NEXTAUTH_SECRET` | Random secret string |
 | `NEXTAUTH_URL` | App URL (e.g. `http://localhost:3000`) |
 | `WHATSAPP_NUMBER` | WhatsApp number without `+` (e.g. `5491112345678`) |
+
+## Sincronización de Borgest
+
+`POST /api/sync-productos` mantiene su autenticación con `x-api-key`, validaciones
+por producto y respuesta `processed`, `created`, `updated`, `errors`.
+La escritura usa lotes de hasta 100 productos enviados juntos a Turso, en lugar de
+hacer llamadas separadas por producto. No cambia la frecuencia de sincronización
+ni omite actualizaciones: los precios y el stock se siguen actualizando en cada
+envío. Cuando falta el stock, conserva el anterior; en productos nuevos usa cero.
+Si falla un lote, se vuelve a intentar por producto para informar errores parciales.
+
+Verificación local: `npm run test:sync` y `npm run build`.
+Para comprobar el ahorro real después de publicar, revisar en Vercel
+Observability → External APIs → Turso → Functions, y comparar las llamadas de
+`/api/sync-productos` por invocación con el período anterior. Con hasta 100
+productos, el camino normal usa dos solicitudes HTTP a Turso. La reducción en
+producción debe confirmarse con sincronizaciones reales, no solo con el build.
