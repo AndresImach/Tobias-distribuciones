@@ -1,19 +1,6 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
-import { prisma } from "@/lib/prisma";
-
-type BorgestProducto = {
-  producto_id: number;
-  producto_nombre: string;
-  producto_codigobarras?: string | null;
-  producto_precioventa1: number;
-  producto_precioventa2?: number | null;
-  producto_precioventa3?: number | null;
-  producto_precioventa4?: number | null;
-  producto_stock?: number | null;
-  producto_estado: string;
-  producto_foto?: string | null;
-};
+import { syncProducts, type BorgestProducto } from "@/lib/sync-products";
 
 function isAuthorized(provided: string | null): boolean {
   const expected = process.env.SYNC_API_KEY;
@@ -108,59 +95,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ processed: 0, created: 0, updated: 0, errors }, { status: 400 });
   }
 
-  const existingIds = new Set(
-    (
-      await prisma.borgestProduct.findMany({
-        where: { id: { in: valid.map((p) => p.producto_id) } },
-        select: { id: true },
-      })
-    ).map((p) => p.id),
-  );
-
-  let created = 0;
-  let updated = 0;
-
-  for (const p of valid) {
-    const isUpdate = existingIds.has(p.producto_id);
-    try {
-      await prisma.borgestProduct.upsert({
-        where: { id: p.producto_id },
-        create: {
-          id: p.producto_id,
-          name: p.producto_nombre,
-          barcode: p.producto_codigobarras,
-          price1: p.producto_precioventa1,
-          price2: p.producto_precioventa2,
-          price3: p.producto_precioventa3,
-          price4: p.producto_precioventa4,
-          stock: p.producto_stock ?? 0,
-          estado: p.producto_estado,
-          foto: p.producto_foto,
-        },
-        update: {
-          name: p.producto_nombre,
-          barcode: p.producto_codigobarras,
-          price1: p.producto_precioventa1,
-          price2: p.producto_precioventa2,
-          price3: p.producto_precioventa3,
-          price4: p.producto_precioventa4,
-          ...(p.producto_stock !== null ? { stock: p.producto_stock } : {}),
-          estado: p.producto_estado,
-          foto: p.producto_foto,
-        },
-      });
-      if (isUpdate) updated++;
-      else created++;
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      errors.push(`producto_id=${p.producto_id}: ${msg}`);
-    }
-  }
-
-  return NextResponse.json({
-    processed: created + updated,
-    created,
-    updated,
-    errors,
-  });
+  const result = await syncProducts(valid);
+  return NextResponse.json({ ...result, errors: [...errors, ...result.errors] });
 }

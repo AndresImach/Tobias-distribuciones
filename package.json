@@ -11,7 +11,8 @@
     "db:seed:admin": "npx tsx prisma/seed-admin.ts",
     "db:migrate": "prisma migrate dev",
     "db:migrate:turso": "npx tsx prisma/migrate-turso.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test:sync": "node --import tsx --test tests/sync-products.test.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
