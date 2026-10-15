@@ -53,11 +53,12 @@ Open [http://localhost:3000](http://localhost:3000) for the store, and [http://l
 ## Sincronización de Borgest
 
 `POST /api/sync-productos` mantiene su autenticación con `x-api-key`, validaciones
-por producto y respuesta `processed`, `created`, `updated`, `errors`.
+por producto y respuesta `processed`, `created`, `updated`, `unchanged`, `errors`.
 La escritura usa lotes de hasta 100 productos enviados juntos a Turso, en lugar de
-hacer llamadas separadas por producto. No cambia la frecuencia de sincronización
-ni omite actualizaciones: los precios y el stock se siguen actualizando en cada
-envío. Cuando falta el stock, conserva el anterior; en productos nuevos usa cero.
+hacer llamadas separadas por producto. Antes de escribir se leen las filas actuales y
+sólo se escriben los productos nuevos o con algún cambio (precio, stock, nombre,
+etc.); los que llegan iguales se cuentan en `unchanged` y no gastan "rows
+written" de Turso, que cobra por fila escrita. Cuando falta el stock, conserva el anterior; en productos nuevos usa cero.
 Si falla un lote, se vuelve a intentar por producto para informar errores parciales.
 
 Verificación local: `npm run test:sync` y `npm run build`.

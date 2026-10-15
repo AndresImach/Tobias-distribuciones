@@ -32,7 +32,7 @@ test("batched inserts and updates preserve stock, nullable values and Prisma dat
   const first = { ...product(1), producto_stock: 9, producto_precioventa2: 80,
     producto_precioventa3: 70, producto_precioventa4: 60,
     producto_foto: "foto", producto_codigobarras: "123" };
-  assert.deepEqual(await syncProducts([first], db), { processed: 1, created: 1, updated: 0, errors: [] });
+  assert.deepEqual(await syncProducts([first], db), { processed: 1, created: 1, updated: 0, unchanged: 0, errors: [] });
   await db.execute('CREATE TABLE CuratedProduct (id INTEGER PRIMARY KEY, borgestProductId INTEGER REFERENCES BorgestProduct(id) ON DELETE SET NULL)');
   await db.execute('INSERT INTO CuratedProduct VALUES (99, 1)');
   const prisma = new PrismaClient({ adapter: new PrismaLibSql({ url }) });
@@ -42,7 +42,7 @@ test("batched inserts and updates preserve stock, nullable values and Prisma dat
   assert.equal(before.price4, 60);
   assert.ok(before.syncedAt instanceof Date);
   assert.deepEqual(await syncProducts([{ ...product(1), producto_nombre: "Actualizado" }, product(2)], db),
-    { processed: 2, created: 1, updated: 1, errors: [] });
+    { processed: 2, created: 1, updated: 1, unchanged: 0, errors: [] });
   const after = await prisma.borgestProduct.findUniqueOrThrow({ where: { id: 1 } });
   assert.equal(after.name, "Actualizado");
   assert.equal((await db.execute('SELECT borgestProductId FROM CuratedProduct WHERE id = 99')).rows[0].borgestProductId, 1);
@@ -57,6 +57,31 @@ test("batched inserts and updates preserve stock, nullable values and Prisma dat
   assert.equal((await prisma.borgestProduct.findUniqueOrThrow({ where: { id: 1 } })).stock, 0);
 });
 
+test("unchanged products are not written again", async (t) => {
+  const { db } = await fixture(t);
+  let batches = 0;
+  const measured = {
+    execute: (...args: Parameters<Client["execute"]>) => db.execute(...args),
+    batch: (...args: Parameters<Client["batch"]>) => { batches++; return db.batch(...args); },
+  } as Client;
+  const catalog = [{ ...product(1), producto_stock: 5, producto_precioventa2: 80, producto_foto: "f" }, product(2)];
+  await syncProducts(catalog, measured);
+  const before = (await db.execute('SELECT syncedAt FROM BorgestProduct WHERE id = 1')).rows[0].syncedAt;
+  batches = 0;
+
+  assert.deepEqual(await syncProducts(catalog, measured),
+    { processed: 2, created: 0, updated: 0, unchanged: 2, errors: [] });
+  assert.equal(batches, 0, "no write when nothing changed");
+  assert.equal((await db.execute('SELECT syncedAt FROM BorgestProduct WHERE id = 1')).rows[0].syncedAt, before);
+
+  // Missing stock keeps the stored value, so it is not a change either.
+  assert.equal((await syncProducts([{ ...catalog[0], producto_stock: null }], measured)).unchanged, 1);
+
+  assert.deepEqual(await syncProducts([{ ...catalog[0], producto_stock: 4 }, product(2)], measured),
+    { processed: 2, created: 0, updated: 1, unchanged: 1, errors: [] });
+  assert.equal((await db.execute('SELECT stock FROM BorgestProduct WHERE id = 1')).rows[0].stock, 4);
+});
+
 test("large uploads use bounded batches and preserve repeated-ID ordering and counters", async (t) => {
   const { db } = await fixture(t);
   let reads = 0;
@@ -67,7 +92,7 @@ test("large uploads use bounded batches and preserve repeated-ID ordering and co
   } as Client;
   const input = Array.from({ length: 250 }, (_, i) => product(i + 1));
   input.push({ ...product(1), producto_nombre: "Último valor", producto_stock: 4 });
-  assert.deepEqual(await syncProducts(input, measured), { processed: 251, created: 251, updated: 0, errors: [] });
+  assert.deepEqual(await syncProducts(input, measured), { processed: 251, created: 251, updated: 0, unchanged: 0, errors: [] });
   assert.equal(reads, 3);
   assert.equal(batches, 3);
   assert.equal((await db.execute('SELECT count(*) AS n FROM BorgestProduct')).rows[0].n, 250);
